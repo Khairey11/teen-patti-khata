@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5a3a">
+<title>Teen Patti Khata</title>
+<meta name="description" content="Keep Teen Patti points for family games played with real cards. Create a room, share the link, tap the winner.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f5a3a'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='%23e0b04a'%3E%E2%99%A0%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hind:wght@400;500;600;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+/* Layout: one phone-width column. A felt "table" card holds the pot; player rows sit below like seats; ledger at the bottom. */
+:root{
+  --bg:#e9efe9; --surface:#f7faf6; --line:#cfdacf; --fg:#13241b; --muted:#56685c;
+  --felt:#0f5a3a; --felt-2:#0b4a2f; --on-felt:#eef7f0;
+  --brass:#b8861b; --brass-ink:#2a1d02; --brass-soft:#f3e3b5;
+  --win:#1f7a46; --loss:#b3362f; --focus:#2a6fdb;
+  --display:"Rozha One",Georgia,"Times New Roman",serif;
+  --body:"Hind",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1511; --surface:#14211a; --line:#26392e; --fg:#e4efe7; --muted:#97ab9e;
+  --felt:#0f4d33; --felt-2:#0a3a26; --on-felt:#eef7f0;
+  --brass:#e0b04a; --brass-ink:#241800; --brass-soft:#3a2f14;
+  --win:#5cc98b; --loss:#f07a70; --focus:#7aa7ff; color-scheme:dark}
+:root[data-theme="dark"]{
+  --bg:#0c1511; --surface:#14211a; --line:#26392e; --fg:#e4efe7; --muted:#97ab9e;
+  --felt:#0f4d33; --felt-2:#0a3a26; --on-felt:#eef7f0;
+  --brass:#e0b04a; --brass-ink:#241800; --brass-soft:#3a2f14;
+  --win:#5cc98b; --loss:#f07a70; --focus:#7aa7ff; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 48px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.2px}
+h1{font-size:30px;line-height:1.1}
+h2{font-size:21px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.suits{font-size:15px;letter-spacing:6px;color:var(--muted)}
+.suits b{color:var(--loss);font-weight:400}
+
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:600;min-height:42px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn-brass{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.btn-felt{background:var(--felt);color:var(--on-felt);border-color:var(--felt)}
+.btn-ghost{background:transparent}
+.btn-sm{min-height:36px;padding:6px 11px;font-size:14px}
+input{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:42px;width:100%;min-width:0}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--muted);min-width:0}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row > *{min-width:0}
+
+/* Latest winner */
+.winner{border-radius:14px;padding:14px 16px;background:var(--brass-soft);border:1px solid var(--brass);display:flex;align-items:center;gap:14px}
+.winner .crown{width:44px;height:44px;flex:none;border-radius:50%;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;font-family:var(--display);font-size:22px}
+.winner .who{font-family:var(--display);font-size:24px;line-height:1.1;overflow-wrap:anywhere}
+
+/* Felt table */
+.table{background:radial-gradient(120% 90% at 50% 0%,var(--felt) 0%,var(--felt-2) 100%);color:var(--on-felt);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;border:3px solid var(--brass)}
+.table .eyebrow{color:var(--on-felt);opacity:.75}
+.pot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pot .amt{font-family:var(--display);font-size:48px;line-height:1}
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:5px 6px 5px 12px;background:rgba(255,255,255,.12);border:1px dashed rgba(255,255,255,.45)}
+.chip input{width:84px;min-height:32px;padding:4px 8px;background:rgba(0,0,0,.25);color:var(--on-felt);border-color:rgba(255,255,255,.3);border-radius:999px}
+.table button.btn-ghost{color:var(--on-felt);border-color:rgba(255,255,255,.35)}
+
+/* Seats */
+.seats{display:flex;flex-direction:column;gap:10px}
+.seat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.seat.out{opacity:.6}
+.seat-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.seat .name{font-weight:700;font-size:18px;overflow-wrap:anywhere;background:none;border:0;padding:0;min-height:0;text-align:left;border-radius:4px}
+.seat .meta{font-size:13px;color:var(--muted)}
+.chips{font-size:22px;font-weight:700}
+.up{color:var(--win)} .down{color:var(--loss)}
+.seat-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.4fr);gap:8px}
+.win-btn{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
+.more{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:10px}
+.tag{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--line);color:var(--fg)}
+
+.code{font-family:var(--display);font-size:34px;letter-spacing:.18em}
+.ledger{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ledger li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ledger li:last-child{border-bottom:0}
+.ledger .who{overflow-wrap:anywhere;font-weight:600}
+.note{font-size:14px;color:var(--muted)}
+.err{color:var(--loss);font-size:14px;font-weight:600}
+.banner{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:14px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 12px 10px 16px;border-radius:12px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:20}
+.toast button{background:transparent;color:var(--bg);border-color:currentColor;min-height:34px;padding:4px 10px}
+@media (max-width:420px){.seat-actions{grid-template-columns:repeat(3,minmax(0,1fr))}.seat-actions .win-btn{grid-column:1/-1}.pot .amt{font-size:42px}
+@media (prefers-reduced-motion:no-preference){.winner{animation:pop .35s ease-out}@keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Family game ledger</div>
+      <h1>Teen Patti Khata</h1>
+    </div>
+    <div class="suits" aria-hidden="true">♠<b>♥</b>♣<b>♦</b></div>
+  </header>
+
+  <div id="status" class="banner" hidden></div>
+
+  <!-- Lobby -->
+  <section id="lobby" class="wrap" style="gap:18px">
+    <div class="panel">
+      <h2>Create a room</h2>
+      <p class="note" style="margin:0">Set the starting points every player gets and the boot each round.</p>
+      <label for="cName">Room name<input id="cName" maxlength="40" placeholder="Tihar night at home"></label>
+      <div class="grid2">
+        <label for="cStart">Starting points<input id="cStart" type="number" inputmode="numeric" min="0" value="1000"></label>
+        <label for="cBoot">Boot<input id="cBoot" type="number" inputmode="numeric" min="1" value="10"></label>
+      </div>
+      <button id="createBtn" class="btn-felt">Create room</button>
+      <div id="createErr" class="err" hidden></div>
+    </div>
+    <div class="panel">
+      <h2>Join with a code</h2>
+      <div class="row">
+        <input id="jCode" maxlength="5" placeholder="ABCDE" autocapitalize="characters" style="flex:1 1 140px;text-transform:uppercase;letter-spacing:.15em">
+        <button id="joinBtn" class="btn-brass">Join</button>
+      </div>
+      <div id="joinErr" class="err" hidden></div>
+    </div>
+  </section>
+
+  <!-- Room -->
+  <section id="room" class="wrap" style="gap:18px" hidden>
+    <div class="row" style="justify-content:space-between">
+      <div style="min-width:0">
+        <div class="eyebrow">Room <span id="rCodeSmall" class="num"></span></div>
+        <h2 id="rName" style="overflow-wrap:anywhere"></h2>
+      </div>
+      <button id="leaveBtn" class="btn-ghost btn-sm">Leave room</button>
+    </div>
+
+    <div id="winner" class="winner" hidden>
+      <div class="crown" aria-hidden="true">♛</div>
+      <div style="min-width:0">
+        <div class="eyebrow">Latest winner</div>
+        <div class="who" id="wName"></div>
+        <div class="note num" id="wMeta"></div>
+      </div>
+    </div>
+
+    <div class="table">
+      <div class="pot">
+        <div>
+          <div class="eyebrow">Pot · Round <span id="roundNo" class="num">0</span></div>
+          <div class="amt num" id="potAmt">0</div>
+        </div>
+        <label class="chip" for="bootIn" style="color:var(--on-felt);flex-direction:row;align-items:center">Boot
+          <input id="bootIn" type="number" inputmode="numeric" min="1" class="num">
+        </label>
+      </div>
+      <div class="row">
+        <button id="collectBtn" class="btn-brass" style="flex:1 1 200px">New round · collect boot</button>
+        <button id="undoBtn" class="btn-ghost">Undo last</button>
+      </div>
+      <div id="tableNote" class="note" style="color:var(--on-felt);opacity:.8;margin:0"></div>
+    </div>
+
+    <div class="seats" id="seats"></div>
+
+    <div class="panel" id="addPanel">
+      <h2>Add a player</h2>
+      <div class="grid2">
+        <label for="pName">Name<input id="pName" maxlength="24" placeholder="Didi"></label>
+        <label for="pStart">Starting points<input id="pStart" type="number" inputmode="numeric" min="0"></label>
+      </div>
+      <button id="addBtn" class="btn-felt">Add to table</button>
+    </div>
+
+    <div class="panel">
+      <h2>Invite family</h2>
+      <div class="row" style="justify-content:space-between">
+        <div class="code num" id="rCode"></div>
+        <button id="copyBtn" class="btn-sm">Copy invite link</button>
+      </div>
+      <p class="note" style="margin:0">Copy the invite and send it on WhatsApp or Viber. The link opens this room directly. They can also enter the code under <b>Join with a code</b>.</p>
+      <textarea id="inviteText" readonly hidden aria-label="Invite text"></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><h2>Winnings record</h2><span class="note num" id="histCount"></span></div>
+      <ul class="ledger" id="ledger"></ul>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast" role="status" hidden><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script>
+(() => {
+  // ---- Config: fill these two from Supabase → Project Settings → API ----
+  const SUPABASE_URL = "https://ibhwtaglnbetshrrtktr.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_QKpLprVykQIhe-GK_uO3Uw_I4EJ-2iV";
+  const TABLE = "tp_rooms";
+
+  const $ = id => document.getElementById(id);
+  const ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const HIST_MAX = 60;
+  let sb = null, code = null, state = null, channel = null, pollT = null, loadTimer = null, openSeat = null;
+  let queue = Promise.resolve();
+
+  const store = {
+    get(){ try { return localStorage.getItem("tpk.room"); } catch(e){ return null; } },
+    set(v){ try { v ? localStorage.setItem("tpk.room", v) : localStorage.removeItem("tpk.room"); } catch(e){} }
+  };
+  const fmt = n => (Math.round(n) || 0).toLocaleString("en-IN");
+  const int = (v, d) => { const n = Math.floor(Number(v)); return Number.isFinite(n) ? n : d; };
+  const rid = n => Array.from({length:n}, () => ALPHA[Math.floor(Math.random()*ALPHA.length)]).join("");
+  const clone = o => JSON.parse(JSON.stringify(o));
+  function h(tag, attrs, ...kids){
+    const el = document.createElement(tag);
+    for (const [k,v] of Object.entries(attrs||{})) {
+      if (k === "class") el.className = v; else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, ""); else if (v !== false && v != null) el.setAttribute(k, v);
+    }
+    for (const k of kids) if (k != null) el.append(k);
+    return el;
+  }
+  function status(msg){ $("status").hidden = !msg; $("status").textContent = msg || ""; }
+  function showErr(id, msg){ $(id).hidden = !msg; $(id).textContent = msg || ""; }
+  let toastT = null;
+  function toast(msg, undo){
+    $("toastMsg").textContent = msg; $("toastUndo").hidden = !undo; $("toast").hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => $("toast").hidden = true, 5000);
+  }
+
+  // ---------- Game logic (pure) ----------
+  const ordered = s => Object.entries(s.players || {}).map(([id,p]) => ({id, ...p})).sort((a,b) => (a.joined||0)-(b.joined||0));
+  const L = {
+    collectBoot(s){
+      if (s.pot > 0) return s;
+      const active = ordered(s).filter(p => !p.out);
+      if (active.length < 2) return s;
+      s.round = (s.round||0) + 1; s.inPot = {};
+      for (const p of active){ s.players[p.id].chips -= s.boot; s.inPot[p.id] = s.boot; s.pot += s.boot; }
+      return s;
+    },
+    bet(s, pid, amt){
+      if (!s.players[pid] || amt <= 0) return s;
+      s.players[pid].chips -= amt; s.pot += amt; s.inPot = s.inPot || {}; s.inPot[pid] = (s.inPot[pid]||0) + amt;
+      return s;
+    },
+    win(s, pid){
+      if (!s.players[pid] || s.pot <= 0) return s;
+      const amt = s.pot, p = s.players[pid];
+      p.chips += amt; p.wins = (p.wins||0) + 1;
+      const entry = {pid, name:p.name, amt, net: amt - ((s.inPot||{})[pid]||0), round:s.round||0, t:Date.now()};
+      s.history = [entry, ...(s.history||[])].slice(0, HIST_MAX);
+      s.latest = entry; s.pot = 0; s.inPot = {};
+      return s;
+    },
+    topUp(s, pid, amt){ if (s.players[pid] && amt){ s.players[pid].chips += amt; s.players[pid].start += amt; } return s; },
+    addPlayer(s, name, start){
+      const id = "p" + rid(6);
+      s.players[id] = {name, chips:start, start, wins:0, out:false, joined:Date.now()};
+      return s;
+    }
+  };
+  window.__tpk = L;
+
+  // ---------- Supabase store ----------
+  async function fetchRoom(c){
+    const { data, error } = await sb.from(TABLE).select("data").eq("code", c).maybeSingle();
+    if (error) throw error;
+    return data ? data.data : null;
+  }
+  function accept(next){
+    if (!next) return;
+    if (state && (next.rev||0) < (state.rev||0)) return; // ignore stale copies
+    state = next; render();
+  }
+  // Save only if nobody else saved since we read (rev check); otherwise refetch and re-apply.
+  async function saveWith(fn){
+    for (let attempt = 0; attempt < 4; attempt++){
+      const before = clone(state); delete before.prev;
+      const next = fn(clone(before));
+      if (!next || JSON.stringify(next) === JSON.stringify(before)) return false;
+      next.prev = before; next.rev = (before.rev||0) + 1; next.updated = Date.now();
+      const { data, error } = await sb.from(TABLE)
+        .update({ data: next, updated_at: new Date().toISOString() })
+        .eq("code", code).eq("data->>rev", String(before.rev||0)).select("code");
+      if (error) throw error;
+      if (data && data.length){ state = next; render(); return true; }
+      const fresh = await fetchRoom(code);   // someone else tapped first
+      if (!fresh) throw new Error("gone");
+      state = fresh; render();
+    }
+    throw new Error("busy");
+  }
+  function mutate(fn, label){
+    queue = queue.then(async () => {
+      if (!state) return;
+      try { const changed = await saveWith(fn); if (changed && label) toast(label, true); }
+      catch(e){ toast("Couldn't save that. Check your internet and try again."); }
+    });
+    return queue;
+  }
+  function undo(){ mutate(s => s.prev ? (delete s.prev.prev, s.prev.rev = s.rev, s.prev) : s, null).then(() => toast("Undone")); }
+
+  async function openRoom(c){
+    closeRoom();
+    code = c; state = null; openSeat = null; store.set(c);
+    if (location.hash !== "#" + c) history.replaceState(null, "", "#" + c);
+    $("lobby").hidden = true; $("room").hidden = false;
+    $("rCode").textContent = c; $("rCodeSmall").textContent = c;
+    status("Loading room…");
+    loadTimer = setTimeout(() => status("Can't reach the room yet. Check your internet."), 10000);
+    try {
+      const d = await fetchRoom(c);
+      clearTimeout(loadTimer);
+      if (!d){ leave(); showErr("joinErr", "No room with code " + c + "."); return; }
+      status(""); accept(d);
+    } catch(e){ clearTimeout(loadTimer); status("Can't reach the room. Check your internet, then reload."); return; }
+    channel = sb.channel("room-" + c)
+      .on("postgres_changes", { event:"UPDATE", schema:"public", table:TABLE, filter:"code=eq." + c },
+          payload => accept(payload.new && payload.new.data))
+      .subscribe();
+    // Safety net for phones that sleep and miss live updates.
+    pollT = setInterval(() => { if (!document.hidden && code === c) fetchRoom(c).then(accept).catch(() => {}); }, 15000);
+  }
+  function closeRoom(){
+    clearTimeout(loadTimer); clearInterval(pollT); pollT = null;
+    if (channel){ sb.removeChannel(channel); channel = null; }
+  }
+  function leave(){ closeRoom(); code = null; state = null; store.set(null); history.replaceState(null, "", location.pathname); $("room").hidden = true; $("lobby").hidden = false; status(""); }
+
+  async function createRoom(){
+    showErr("createErr", "");
+    const start = Math.max(0, int($("cStart").value, 1000));
+    const boot = Math.max(1, int($("cBoot").value, 10));
+    $("createBtn").disabled = true;
+    try {
+      for (let i = 0; i < 6; i++){
+        const c = rid(5);
+        const room = {code:c, name:($("cName").value.trim() || "Family table"), startChips:start, boot, pot:0, round:0,
+          players:{}, inPot:{}, history:[], latest:null, rev:0, created:Date.now(), updated:Date.now()};
+        const { error } = await sb.from(TABLE).insert({ code:c, data:room });
+        if (!error){ await openRoom(c); return; }
+        if (error.code !== "23505") throw error; // 23505 = code already taken, try another
+      }
+      throw new Error("no code");
+    } catch(e){ showErr("createErr", "Couldn't create the room. Check your internet and try again."); }
+    finally { $("createBtn").disabled = false; }
+  }
+
+  // ---------- Render ----------
+  function render(){
+    if (!state) return;
+    const s = state;
+    $("rName").textContent = s.name || "Family table";
+    $("potAmt").textContent = fmt(s.pot);
+    $("roundNo").textContent = s.round || 0;
+    if (document.activeElement !== $("bootIn")) $("bootIn").value = s.boot;
+    if (!$("pStart").value) $("pStart").placeholder = s.startChips;
+    const players = ordered(s), active = players.filter(p => !p.out);
+    $("collectBtn").disabled = s.pot > 0 || active.length < 2;
+    $("undoBtn").disabled = !s.prev;
+    $("tableNote").textContent = players.length < 2 ? "Add at least two players to start." :
+      s.pot > 0 ? "Bet with the buttons on each seat, then tap the winner. The whole pot goes to them." :
+      `Collecting takes ${fmt(s.boot)} from ${active.length} player${active.length===1?"":"s"}.`;
+
+    const w = s.latest;
+    $("winner").hidden = !w;
+    if (w){ $("wName").textContent = w.name; $("wMeta").textContent = `Won ${fmt(w.amt)} in round ${w.round} · ${new Date(w.t).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`; }
+
+    const box = $("seats"); box.replaceChildren();
+    if (!players.length) box.append(h("div", {class:"panel note", text:"No players yet. Add everyone at the table below with their starting points."}));
+    for (const p of players){
+      const net = p.chips - p.start, inPot = (s.inPot||{})[p.id] || 0, open = openSeat === p.id;
+      const seat = h("div", {class:"seat" + (p.out ? " out" : "")},
+        h("div", {class:"seat-top"},
+          h("div", {style:"min-width:0"},
+            h("button", {class:"name", "aria-expanded": String(open), onclick:() => { openSeat = open ? null : p.id; render(); }, text:p.name + (open ? " ▴" : " ▾")}),
+            h("div", {class:"meta num", text:`${p.wins||0} win${p.wins===1?"":"s"} · in pot ${fmt(inPot)}${p.out ? " · sitting out" : ""}`})),
+          h("div", {style:"text-align:right"},
+            h("div", {class:"chips num", text:fmt(p.chips)}),
+            h("div", {class:"meta num " + (net>0?"up":net<0?"down":""), text:(net>0?"+":"") + fmt(net)}))),
+        h("div", {class:"seat-actions"},
+          ...[1,2,4].map(m => h("button", {class:"btn-sm num", disabled: s.pot<=0 || p.out,
+            onclick:() => mutate(x => L.bet(x, p.id, x.boot*m), `${p.name} bet ${fmt(s.boot*m)}`), text:"+" + fmt(s.boot*m)})),
+          h("button", {class:"btn-sm win-btn", disabled: s.pot<=0 || p.out,
+            onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`), text: s.pot>0 ? `Wins ${fmt(s.pot)}` : "Wins"})));
+      if (open){
+        const betId = "bet-" + p.id, topId = "top-" + p.id;
+        seat.append(h("div", {class:"more"},
+          h("div", {class:"row"},
+            h("input", {id:betId, type:"number", inputmode:"numeric", min:"1", placeholder:"Custom bet", style:"flex:1 1 120px", "aria-label":"Custom bet"}),
+            h("button", {class:"btn-sm", disabled: s.pot<=0 || p.out, onclick:() => { const v = int($(betId).value,0); if (v>0) mutate(x => L.bet(x, p.id, v), `${p.name} bet ${fmt(v)}`); }, text:"Bet"})),
+          h("div", {class:"row"},
+            h("input", {id:topId, type:"number", inputmode:"numeric", placeholder:"Add points", style:"flex:1 1 120px", "aria-label":"Add points"}),
+            h("button", {class:"btn-sm", onclick:() => { const v = int($(topId).value,0); if (v) mutate(x => L.topUp(x, p.id, v), `${v>0?"Added":"Removed"} ${fmt(Math.abs(v))} points for ${p.name}`); }, text:"Add points"})),
+          h("div", {class:"row"},
+            h("button", {class:"btn-sm btn-ghost", onclick:() => mutate(x => (x.players[p.id].out = !x.players[p.id].out, x), null), text: p.out ? "Back in the game" : "Sit out next rounds"}),
+            h("button", {class:"btn-sm btn-ghost", disabled: inPot>0, onclick:() => mutate(x => (delete x.players[p.id], x), `Removed ${p.name}`), text:"Remove player"}))));
+      }
+      box.append(seat);
+    }
+
+    const led = $("ledger"); led.replaceChildren();
+    const hist = s.history || [];
+    $("histCount").textContent = hist.length ? `${hist.length} round${hist.length===1?"":"s"} won` : "";
+    if (!hist.length) led.append(h("li", {}, h("span", {class:"muted", text:"—"}), h("span", {class:"muted", text:"No winners yet. Tap Wins on a seat to record one."}), h("span")));
+    for (const e of hist){
+      led.append(h("li", {}, h("span", {class:"tag num", text:"R" + e.round}), h("span", {class:"who", text:e.name}), h("span", {class:"num up", text:"+" + fmt(e.amt)})));
+    }
+  }
+
+  // ---------- Events ----------
+  const hashCode = () => { const c = (location.hash || "").replace(/^#/, "").toUpperCase(); return /^[A-Z0-9]{5}$/.test(c) ? c : null; };
+  $("createBtn").onclick = createRoom;
+  $("joinBtn").onclick = () => {
+    showErr("joinErr", "");
+    const c = $("jCode").value.trim().toUpperCase();
+    if (!/^[A-Z0-9]{5}$/.test(c)) return showErr("joinErr", "Enter the 5-letter room code.");
+    openRoom(c);
+  };
+  $("jCode").addEventListener("keydown", e => { if (e.key === "Enter") $("joinBtn").click(); });
+  $("leaveBtn").onclick = leave;
+  $("collectBtn").onclick = () => mutate(x => L.collectBoot(x), `Round started · boot ${fmt(state.boot)} collected`);
+  $("undoBtn").onclick = undo;
+  $("toastUndo").onclick = () => { $("toast").hidden = true; undo(); };
+  $("bootIn").addEventListener("change", e => { const v = Math.max(1, int(e.target.value, state.boot)); mutate(x => (x.boot = v, x), `Boot set to ${fmt(v)}`); });
+  $("addBtn").onclick = () => {
+    const name = $("pName").value.trim();
+    if (!name) { $("pName").focus(); return; }
+    const start = Math.max(0, int($("pStart").value, state.startChips));
+    mutate(x => L.addPlayer(x, name, start), `${name} joined with ${fmt(start)} points`);
+    $("pName").value = ""; $("pStart").value = "";
+  };
+  $("pName").addEventListener("keydown", e => { if (e.key === "Enter") $("addBtn").click(); });
+  $("copyBtn").onclick = async () => {
+    const link = location.origin + location.pathname + "#" + code;
+    const txt = `Join my Teen Patti room "${state ? state.name : ""}": ${link} (room code ${code})`;
+    try {
+      if (navigator.share) { await navigator.share({ title:"Teen Patti Khata", text:txt }); return; }
+      await navigator.clipboard.writeText(txt); toast("Invite link copied");
+    } catch(e){
+      if (e && e.name === "AbortError") return;
+      const t = $("inviteText"); t.hidden = false; t.value = txt; t.style.width = "100%"; t.select(); toast("Select and copy the invite text");
+    }
+  };
+  window.addEventListener("hashchange", () => { const c = hashCode(); if (c && c !== code) openRoom(c); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && code) fetchRoom(code).then(accept).catch(() => {}); });
+
+  // ---------- Start ----------
+  if (!window.supabase || SUPABASE_URL.startsWith("__")) { status("This site isn't connected to its database yet."); ["createBtn","joinBtn"].forEach(id => $(id).disabled = true); return; }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+  const first = hashCode() || store.get();
+  if (first) openRoom(first);
+})();
+
+</script>
+</body>
+</html>
