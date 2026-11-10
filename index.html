@@ -287,7 +287,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     },
     bet(s, pid, amt){
       if (!s.players[pid] || amt <= 0) return s;
-      if (!(s.pot > 0)) { s.round = (s.round||0) + 1; s.inPot = {}; }
+      if (!(s.pot > 0)) {
+        if (s.boot > 0 && !s.players[pid].out) L.collectBoot(s);   // boot applies every round until changed
+        if (!(s.pot > 0)) { s.round = (s.round||0) + 1; s.inPot = {}; }
+      }
       s.players[pid].chips -= amt; s.pot += amt; s.inPot = s.inPot || {}; s.inPot[pid] = (s.inPot[pid]||0) + amt;
       return s;
     },
@@ -408,7 +411,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     $("collectBtn").disabled = s.pot > 0 || active.length < 2;
     $("tableNote").textContent = players.length < 2 ? "Seat at least two players to start." :
       s.pot > 0 ? "Keep betting from each seat, then tap the winner. The whole pot goes to them." :
-      hasBoot ? `Collecting takes ${fmt(s.boot)} from ${active.length} player${active.length===1?"":"s"}. Or tap a bet on any seat to start.` :
+      hasBoot ? `Boot ${fmt(s.boot)} is collected from all ${active.length} players at the start of every round. Change it any time.` :
       "Tap a bet on any seat to start the next round.";
 
     const w = s.latest;
