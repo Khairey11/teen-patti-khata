@@ -160,6 +160,73 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 .toast button{background:transparent;color:var(--bg);border-color:currentColor;min-height:34px;padding:4px 10px}
 @media (max-width:420px){.pot .amt{font-size:42px}
 @media (prefers-reduced-motion:no-preference){.winner{animation:pop .35s ease-out}@keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+
+/* ===== Polish layer: card-night table ===== */
+:root{--wood:#6b3f1f;--wood-2:#3d220f;--glow:rgba(255,196,92,.10);--panel-hi:rgba(255,255,255,.035)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glow:rgba(255,196,92,.10);--panel-hi:rgba(255,255,255,.035)}}
+:root[data-theme="dark"]{--glow:rgba(255,196,92,.10);--panel-hi:rgba(255,255,255,.035)}
+body{background:
+  radial-gradient(120% 60% at 50% -10%, var(--glow), transparent 60%),
+  repeating-linear-gradient(45deg, transparent 0 22px, rgba(127,127,127,.035) 22px 23px),
+  repeating-linear-gradient(-45deg, transparent 0 22px, rgba(127,127,127,.035) 22px 23px),
+  var(--bg);background-attachment:fixed}
+h1{font-size:32px}
+header{padding-block:4px}
+.fan{position:relative;width:74px;height:56px;flex:none}
+.fan .card{position:absolute;bottom:0;left:22px;width:34px;height:48px;border-radius:6px;background:#fbf8f1;border:1px solid #d9cfbd;box-shadow:0 4px 10px rgba(0,0,0,.25);color:#1a1a1a;font-family:var(--display);font-size:15px;line-height:1;padding:4px 0 0 5px;transform-origin:50% 120%}
+.fan .card i{display:block;font-style:normal;font-size:14px;margin-top:2px}
+.fan .card.red{color:#c0262d}
+.fan .c1{transform:rotate(-18deg)} .fan .c2{transform:rotate(0deg);z-index:1} .fan .c3{transform:rotate(18deg);z-index:2}
+.panel{border-radius:18px;background:linear-gradient(180deg,var(--panel-hi),transparent 40%),var(--surface);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 24px rgba(0,0,0,.12)}
+.panel h2{font-size:22px}
+/* Table: wooden rim, brass inlay, felt grain */
+.arena{max-width:480px}
+.felt{inset:15% 13%;border:0;background:
+  radial-gradient(circle at 50% 38%, rgba(255,255,255,.10), transparent 55%),
+  repeating-radial-gradient(circle at 30% 30%, rgba(0,0,0,.05) 0 1px, transparent 1px 3px),
+  radial-gradient(80% 70% at 50% 40%, var(--felt) 0%, var(--felt-2) 100%);
+  box-shadow:0 0 0 3px var(--brass),0 0 0 14px var(--wood),0 0 0 15px var(--wood-2),inset 0 0 40px rgba(0,0,0,.45),0 22px 40px rgba(0,0,0,.45)}
+.felt::before{content:"";position:absolute;inset:9px;border-radius:50%;border:1px dashed rgba(224,176,74,.35);pointer-events:none}
+.felt .amt{text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.potstack{display:flex;justify-content:center;height:14px;margin-bottom:2px}
+.potstack .pc{width:22px;height:9px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe7a3,var(--brass) 60%,#8a6210);border:1px solid rgba(0,0,0,.25);margin:0 -4px;box-shadow:0 2px 0 #7a5200}
+.potstack .pc:nth-child(2){transform:translateY(-4px)}
+.pseat{width:90px;gap:3px}
+.pseat .av{width:54px;height:54px;border:3px solid var(--brass);box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.pseat.sel .av{border-color:#fff4cf;box-shadow:0 0 0 3px var(--brass),0 0 22px rgba(224,176,74,.75)}
+.pseat .nm{background:var(--fg);color:var(--bg);border:0;font-size:12.5px;padding:1px 9px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.pseat .pt{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:rgba(0,0,0,.28);color:#ffe7a3;border-radius:999px;padding:0 7px 0 3px}
+.pseat .pt::before{content:"";width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe7a3,var(--brass) 60%,#8a6210)}
+.pseat:focus-visible{outline:none}
+.pseat:focus-visible .av{outline:2px solid var(--focus);outline-offset:3px}
+.stake{background:rgba(0,0,0,.45);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+/* Latest winner */
+.winner{border-radius:18px;background:linear-gradient(110deg,var(--brass-soft) 0%,var(--brass-soft) 40%,rgba(255,236,170,.35) 50%,var(--brass-soft) 60%) 0 0/250% 100%,var(--brass-soft);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+@media (prefers-reduced-motion:no-preference){.winner{animation:pop .35s ease-out, shine 3.2s ease-in-out 1}@keyframes shine{from{background-position:100% 0}to{background-position:-50% 0}}}
+/* Who won: avatar buttons */
+.won-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.won-grid .wbtn{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;min-height:56px;border-radius:999px;background:linear-gradient(180deg,#f1c766,var(--brass));color:var(--brass-ink);border:1px solid #9a6d12;box-shadow:0 3px 0 #8a6210,0 6px 12px rgba(0,0,0,.2);text-align:left;white-space:nowrap}
+.won-grid .wbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6210}
+.wface{width:42px;height:42px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;border:2px solid rgba(255,255,255,.7)}
+.wface svg{width:100%;height:100%;display:block}
+.wname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.wcrown{font-size:18px;opacity:.8}
+/* Bets as casino chips */
+.bet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;justify-items:center}
+.chipbtn{width:64px;height:64px;min-height:64px;padding:0;border-radius:50%;font-weight:800;font-size:15px;color:#fff;border:0;position:relative;
+  background:repeating-conic-gradient(var(--cc) 0 30deg,#fff 30deg 45deg);box-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.25)}
+.chipbtn::before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--cc);border:2px dashed rgba(255,255,255,.75)}
+.chipbtn{isolation:isolate}
+.chipbtn::before{z-index:-1}
+.chipbtn.c0{--cc:#1d4ed8}.chipbtn.c1{--cc:#15803d}.chipbtn.c2{--cc:#b91c1c}.chipbtn.c3{--cc:#111827}
+.chipbtn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.chipbtn:disabled{opacity:.3;filter:grayscale(.6)}
+/* Buttons */
+.btn-felt{background:linear-gradient(180deg,#167149,var(--felt));box-shadow:0 3px 0 var(--felt-2)}
+.btn-brass{background:linear-gradient(180deg,#f1c766,var(--brass));box-shadow:0 3px 0 #8a6210}
+.btn-felt:active,.btn-brass:active{transform:translateY(2px);box-shadow:none}
+.toast{border-radius:14px;font-weight:600}
+@media (max-width:380px){.chipbtn{width:56px;height:56px;min-height:56px;font-size:14px}.pseat{width:80px}.pseat .av{width:48px;height:48px}}
 </style>
 </head>
 <body>
@@ -169,7 +236,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       <div class="eyebrow">Family game ledger</div>
       <h1>Teen Patti Khata</h1>
     </div>
-    <div class="suits" aria-hidden="true">♠<b>♥</b>♣<b>♦</b></div>
+    <div class="fan" aria-hidden="true"><span class="card c1">A<i>♠</i></span><span class="card c2 red">K<i>♥</i></span><span class="card c3">Q<i>♣</i></span></div>
   </header>
 
   <div id="status" class="banner" hidden></div>
@@ -234,6 +301,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       <div class="arena" id="arena">
         <div class="felt">
           <div class="eyebrow">Pot · Round <span id="roundNo" class="num">0</span></div>
+          <div class="potstack" aria-hidden="true"><span class="pc"></span><span class="pc"></span><span class="pc"></span></div>
           <div class="amt num" id="potAmt">0</div>
           <div class="felt-sub num" id="bootTag"></div>
         </div>
@@ -633,7 +701,11 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     const active = players.filter(p => !p.out);
     $("wonPanel").hidden = !(s.pot > 0);
     $("wonTitle").textContent = `Who won Rs ${fmt(s.pot)}?`;
-    $("wonGrid").replaceChildren(...active.map(p => h("button", {onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`), text:"♛ " + p.name})));
+    $("wonGrid").replaceChildren(...active.map(p => {
+      const i = players.indexOf(p), face = h("span", {class:"wface"});
+      if (validAv(p.av)) face.innerHTML = avatarSVG(p.av); else { face.style.background = PALETTE[i % PALETTE.length]; face.textContent = initials(p.name); }
+      return h("button", {class:"wbtn", onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`)}, face, h("span", {class:"wname", text:p.name}), h("span", {class:"wcrown", text:"♛"}));
+    }));
 
     // Selected player's actions
     const sp = selSeat && s.players[selSeat];
@@ -646,7 +718,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       $("actNet").textContent = (net>0?"+":"") + fmt(net);
       $("actNet").className = "note num " + (net>0?"up":net<0?"down":"");
       const bootDue = !(s.pot > 0) && s.boot > 0 ? s.boot : 0;
-      $("actBets").replaceChildren(...betsFor(s).map(a => h("button", {class:"btn-sm num", disabled: sp.out || a + bootDue > sp.chips,
+      $("actBets").replaceChildren(...betsFor(s).map((a, k) => h("button", {class:"chipbtn num c" + k, disabled: sp.out || a + bootDue > sp.chips,
         onclick:() => mutate(x => L.bet(x, pid, a), `${sp.name} bet ${fmt(a)}`), text:"+" + fmt(a)})));
       $("actBetBtn").disabled = sp.out;
       $("actOut").textContent = sp.out ? "Back in the game" : "Sit out next rounds";
