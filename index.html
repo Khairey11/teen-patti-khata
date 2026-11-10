@@ -134,7 +134,15 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 
 .code{font-family:var(--display);font-size:34px;letter-spacing:.18em}
 .ledger{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.ledger li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ledger li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:center}
+.ledger .mini{width:32px;height:32px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex:none}
+.ledger .mini svg,.winner .crown svg,.tally .mini svg{width:100%;height:100%;display:block}
+.ledger .when{font-size:12px;color:var(--muted);font-weight:400}
+.winner .crown.pic{background:none;overflow:hidden;width:52px;height:52px;border:3px solid var(--brass)}
+.tally{display:flex;flex-wrap:wrap;gap:8px}
+.tally .chip-t{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 3px;font-size:14px;font-weight:600}
+.tally .mini{width:26px;height:26px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+.tally .lead{border-color:var(--brass);background:var(--brass-soft)}
 .ledger li:last-child{border-bottom:0}
 .ledger .who{overflow-wrap:anywhere;font-weight:600}
 .note{font-size:14px;color:var(--muted)}
@@ -207,7 +215,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     </div>
 
     <div id="winner" class="winner" hidden>
-      <div class="crown" aria-hidden="true">♛</div>
+      <div class="crown" id="wAv" aria-hidden="true">♛</div>
       <div style="min-width:0">
         <div class="eyebrow">Latest winner</div>
         <div class="who" id="wName"></div>
@@ -300,6 +308,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 
     <div class="panel">
       <div class="row" style="justify-content:space-between"><h2>Winnings record</h2><span class="note num" id="histCount"></span></div>
+      <div class="tally" id="tally"></div>
       <ul class="ledger" id="ledger"></ul>
     </div>
   </section>
@@ -662,7 +671,11 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 
     const w = s.latest;
     $("winner").hidden = !w;
-    if (w){ $("wName").textContent = w.name; $("wMeta").textContent = `Won ${fmt(w.amt)} in round ${w.round} · ${new Date(w.t).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`; }
+    if (w){
+      const wp = s.players[w.pid], wav = $("wAv");
+      if (wp && validAv(wp.av)) { wav.className = "crown pic"; wav.innerHTML = avatarSVG(wp.av); }
+      else { wav.className = "crown"; wav.textContent = "♛"; }
+      $("wName").textContent = w.name; $("wMeta").textContent = `Won ${fmt(w.amt)} in round ${w.round} · ${new Date(w.t).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`; }
 
     const mine = me.get(code);
     const seated = mine && mine.pid && s.players[mine.pid];
@@ -685,10 +698,28 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     const led = $("ledger"); led.replaceChildren();
     const hist = s.history || [];
     $("histCount").textContent = hist.length ? `${hist.length} round${hist.length===1?"":"s"} won` : "";
-    if (!hist.length) led.append(h("li", {}, h("span", {class:"muted", text:"—"}), h("span", {class:"muted", text:"No winners yet. Tap Wins on a seat to record one."}), h("span")));
+    const order = ordered(s), idx = Object.fromEntries(order.map((p,i) => [p.id, i]));
+    const mini = (pid, name) => {
+      const p = s.players[pid], el = h("span", {class:"mini"});
+      if (p && validAv(p.av)) el.innerHTML = avatarSVG(p.av);
+      else { el.style.background = PALETTE[(idx[pid] ?? 0) % PALETTE.length]; el.textContent = initials(name || "?"); }
+      return el;
+    };
+    if (!hist.length) led.append(h("li", {}, h("span", {class:"muted", text:"—"}), h("span", {class:"muted", text:"No winners yet. When a round ends, tap the winner's name under the table."}), h("span")));
     for (const e of hist){
-      led.append(h("li", {}, h("span", {class:"tag num", text:"R" + e.round}), h("span", {class:"who", text:e.name}), h("span", {class:"num up", text:"+" + fmt(e.amt)})));
+      const when = new Date(e.t).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+      led.append(h("li", {}, mini(e.pid, e.name),
+        h("span", {class:"who"}, e.name, h("div", {class:"when num", text:`Round ${e.round} · ${when}`})),
+        h("span", {class:"num up", style:"font-weight:700", text:"+" + fmt(e.amt)})));
     }
+    // Wins tally: rounds won per player, most first
+    const counts = {};
+    for (const e of hist) counts[e.pid] = counts[e.pid] || { name:e.name, n:0 }, counts[e.pid].n++;
+    const top = Object.entries(counts).sort((a,b) => b[1].n - a[1].n);
+    const best = top.length ? top[0][1].n : 0;
+    $("tally").hidden = !top.length;
+    $("tally").replaceChildren(...top.map(([pid, c]) => h("span", {class:"chip-t" + (c.n === best ? " lead" : "")},
+      mini(pid, c.name), `${c.name} · ${c.n} win${c.n===1?"":"s"}`)));
   }
 
   // ---------- Events ----------
