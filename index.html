@@ -227,7 +227,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     set(v){ try { v ? localStorage.setItem("tpk.room", v) : localStorage.removeItem("tpk.room"); } catch(e){} }
   };
   const fmt = n => (Math.round(n) || 0).toLocaleString("en-IN");
-  const int = (v, d) => { const n = Math.floor(Number(v)); return Number.isFinite(n) ? n : d; };
+  const int = (v, d) => { if (v == null || String(v).trim() === "") return d; const n = Math.floor(Number(v)); return Number.isFinite(n) ? n : d; };
   const rid = n => Array.from({length:n}, () => ALPHA[Math.floor(Math.random()*ALPHA.length)]).join("");
   const clone = o => JSON.parse(JSON.stringify(o));
   function h(tag, attrs, ...kids){
