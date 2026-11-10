@@ -96,7 +96,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 .stake{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--on-felt);background:rgba(0,0,0,.35);border-radius:999px;padding:2px 8px 2px 3px;pointer-events:none}
 .coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe7a3,var(--brass) 60%,#8a6210);border:2px dashed rgba(255,255,255,.65);box-sizing:border-box;flex:none}
 #fx{position:absolute;inset:0;pointer-events:none}
-#fx .coin{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px}
+#fx .coin{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;box-shadow:0 3px 6px rgba(0,0,0,.35);z-index:3}
+#fx .floattext{position:absolute;font-family:var(--display);font-size:26px;color:#ffd54a;text-shadow:0 2px 0 #7a5200,0 0 12px rgba(0,0,0,.5);white-space:nowrap;z-index:4}
+#fx .confetti{position:absolute;width:7px;height:11px;margin:-5px 0 0 -3px;border-radius:2px;z-index:4}
+#fx{z-index:5}
 .won-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
 .won-grid button{background:var(--brass);color:var(--brass-ink);border-color:var(--brass);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -627,28 +630,86 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     animate(s, pos);
   }
 
-  // Chips slide from seats into the pot when money goes in, and from the pot to the winner.
+  // Animations: chips arc from seats into the pot; on a win the pot showers chips onto the winner.
+  function tweenNum(el, from, to, ms){
+    if (!el || from === to) return;
+    const t0 = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = fmt(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
   function animate(s, pos){
-    const view = { inPot: Object.assign({}, s.inPot||{}), latestT: s.latest ? s.latest.t : null, pos };
+    const chips = {}; for (const [id, p] of Object.entries(s.players||{})) chips[id] = p.chips;
+    const view = { inPot: Object.assign({}, s.inPot||{}), latestT: s.latest ? s.latest.t : null, pot: s.pot||0, chips, pos };
     const prev = prevView; prevView = view;
     if (!prev || reduceMotion()) return;
-    const fx = $("fx"), center = {x:50, y:50};
-    const fly = (from, to, delay) => {
-      const c = h("div", {class:"coin"}); c.style.left = from.x + "%"; c.style.top = from.y + "%"; fx.append(c);
-      const dx = (to.x - from.x) * fx.clientWidth / 100, dy = (to.y - from.y) * fx.clientHeight / 100;
-      const anim = c.animate([{transform:"translate(0,0) scale(1)", opacity:1}, {transform:`translate(${dx}px,${dy}px) scale(.85)`, opacity:.95}],
-        {duration:520, delay, easing:"cubic-bezier(.3,.7,.2,1)", fill:"forwards"});
-      anim.onfinish = () => c.remove(); setTimeout(() => c.remove(), 1500 + delay);
+    const fx = $("fx"), W = fx.clientWidth, H = fx.clientHeight, center = {x:50, y:50};
+    const fly = (from, to, delay, size, lift) => {
+      const c = h("div", {class:"coin fly"}); c.style.left = from.x + "%"; c.style.top = from.y + "%";
+      if (size) { c.style.width = c.style.height = size + "px"; c.style.margin = (-size/2) + "px 0 0 " + (-size/2) + "px"; }
+      fx.append(c);
+      const dx = (to.x - from.x) * W / 100, dy = (to.y - from.y) * H / 100, up = lift == null ? -40 : lift;
+      const anim = c.animate([
+        {transform:"translate(0,0) scale(.6) rotate(0deg)", opacity:0},
+        {transform:`translate(${dx*.5}px,${dy*.5 + up}px) scale(1.15) rotate(180deg)`, opacity:1, offset:.45},
+        {transform:`translate(${dx}px,${dy}px) scale(.9) rotate(360deg)`, opacity:1}
+      ], {duration:700, delay, easing:"cubic-bezier(.25,.8,.3,1)", fill:"forwards"});
+      anim.onfinish = () => c.remove(); setTimeout(() => c.remove(), 2000 + delay);
     };
+    const felt = document.querySelector(".felt");
+    const pulse = delay => setTimeout(() => felt && felt.animate([{transform:"scale(1)"},{transform:"scale(1.05)"},{transform:"scale(1)"}], {duration:380, easing:"ease-out"}), delay);
+    const seatEl = pid => $("ring").querySelector(`.pseat[data-pid="${pid}"]`);
+    const seatPts = pid => { const el = seatEl(pid); return el && el.querySelector(".pt"); };
+    const floatText = (at, text, delay) => setTimeout(() => {
+      const t = h("div", {class:"floattext num", text}); t.style.left = at.x + "%"; t.style.top = at.y + "%"; fx.append(t);
+      t.animate([{transform:"translate(-50%,-50%) scale(.6)", opacity:0},{transform:"translate(-50%,-160%) scale(1.15)", opacity:1, offset:.3},{transform:"translate(-50%,-260%) scale(1)", opacity:0}],
+        {duration:1600, easing:"ease-out", fill:"forwards"}).onfinish = () => t.remove();
+    }, delay);
+    const confetti = (at, delay) => setTimeout(() => {
+      const colors = ["#e0b04a","#f43f5e","#22c55e","#38bdf8","#a855f7","#facc15"];
+      for (let i = 0; i < 26; i++){
+        const c = h("div", {class:"confetti"}); c.style.left = at.x + "%"; c.style.top = at.y + "%"; c.style.background = colors[i % colors.length];
+        fx.append(c);
+        const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 70;
+        c.animate([{transform:"translate(0,0) rotate(0deg)", opacity:1},
+          {transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist + 30}px) rotate(${360 + Math.random()*360}deg)`, opacity:0}],
+          {duration:1100 + Math.random()*500, easing:"cubic-bezier(.2,.7,.3,1)", fill:"forwards"}).onfinish = () => c.remove();
+      }
+    }, delay);
+
+    // A win: shower the pot onto the winner
     if (view.latestT && view.latestT !== prev.latestT && s.latest && pos[s.latest.pid]){
-      const to = pos[s.latest.pid];
-      for (let i = 0; i < 8; i++) fly({x:center.x + (i%3-1)*3, y:center.y + (i%2)*3}, to, i*60);
+      const pid = s.latest.pid, to = pos[pid];
+      tweenNum($("potAmt"), prev.pot || s.latest.amt, 0, 700);
+      for (let i = 0; i < 14; i++) fly({x:center.x + (Math.random()*10-5), y:center.y + (Math.random()*8-4)}, to, i*55, 24, -60);
+      const el = seatEl(pid);
+      setTimeout(() => {
+        if (el){
+          el.animate([{transform:"translate(-50%,-50%) scale(1)"},{transform:"translate(-50%,-62%) scale(1.22)"},{transform:"translate(-50%,-50%) scale(1)"}], {duration:600, easing:"cubic-bezier(.3,1.6,.5,1)"});
+          const av = el.querySelector(".av");
+          av && av.animate([{boxShadow:"0 0 0 0 rgba(224,176,74,.9)"},{boxShadow:"0 0 0 18px rgba(224,176,74,0)"}], {duration:900, iterations:2});
+        }
+        tweenNum(seatPts(pid), prev.chips[pid] ?? (s.players[pid].chips - s.latest.amt), s.players[pid].chips, 900);
+      }, 650);
+      floatText(to, "+" + fmt(s.latest.amt), 650);
+      confetti(to, 700);
       return;
     }
+    // Bets and boot: chips arc from each paying seat into the pot
+    let t = 0;
     for (const [pid, amt] of Object.entries(view.inPot)){
       const before = (prev.inPot||{})[pid] || 0;
-      if (amt > before && pos[pid]){ const from = pos[pid]; for (let i = 0; i < 3; i++) fly(from, center, i*90); }
+      if (amt > before && pos[pid]){
+        const from = pos[pid];
+        for (let i = 0; i < 3; i++) fly(from, {x:center.x + (i-1)*3, y:center.y + 4}, t + i*90, 22);
+        tweenNum(seatPts(pid), prev.chips[pid] ?? s.players[pid].chips, s.players[pid].chips, 600);
+        t += 110;
+      }
     }
+    if (t > 0){ tweenNum($("potAmt"), prev.pot, s.pot, 700 + t); pulse(650 + t); }
   }
 
   function render(){
