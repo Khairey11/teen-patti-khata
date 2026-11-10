@@ -106,6 +106,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 .inline{flex-direction:row;align-items:center;gap:8px;color:var(--fg)}
 .plist{display:flex;flex-direction:column;gap:8px}
+.broke-row{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.broke-row:last-child{border-bottom:0}
+.pseat.broke .av{filter:grayscale(1)}
+.pseat .lowmark{font-size:10px;font-weight:800;color:var(--loss);text-transform:uppercase;letter-spacing:.04em}
 .name-av{display:flex;gap:8px;align-items:center}
 .avbtn{width:44px;height:44px;min-height:44px;flex:none;padding:0;border-radius:50%;overflow:hidden;border:2px dashed var(--line);background:var(--surface);display:grid;place-items:center;font-size:12px;color:var(--muted)}
 .avbtn svg,.pseat .av svg{width:100%;height:100%;display:block}
@@ -236,6 +240,12 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
         <div id="ring"></div>
         <div id="fx" aria-hidden="true"></div>
       </div>
+    </div>
+
+    <div class="panel" id="brokePanel" hidden style="border:2px solid var(--loss)">
+      <h2>Out of money</h2>
+      <p class="note" style="margin:0">Add the cash they hand over to keep playing, or dismiss them from the table.</p>
+      <div id="brokeList" class="plist"></div>
     </div>
 
     <div class="panel" id="wonPanel" hidden>
@@ -381,14 +391,17 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
   const L = {
     collectBoot(s){
       if (s.pot > 0 || !(s.boot > 0)) return s;
-      const active = ordered(s).filter(p => !p.out);
+      const active = ordered(s).filter(p => !p.out && !p.left && p.chips >= s.boot);  // anyone who can't cover the boot sits this round out
       if (active.length < 2) return s;
       s.round = (s.round||0) + 1; s.inPot = {};
       for (const p of active){ s.players[p.id].chips -= s.boot; s.inPot[p.id] = s.boot; s.pot += s.boot; }
       return s;
     },
     bet(s, pid, amt){
-      if (!s.players[pid] || amt <= 0) return s;
+      const pl = s.players[pid];
+      if (!pl || pl.left || amt <= 0) return s;
+      const bootDue = !(s.pot > 0) && s.boot > 0 ? s.boot : 0;
+      if (pl.chips < amt + bootDue) return s;   // can't bet more than they have
       if (!(s.pot > 0)) {
         if (s.boot > 0 && !s.players[pid].out) L.collectBoot(s);   // boot applies every round until changed
         if (!(s.pot > 0)) { s.round = (s.round||0) + 1; s.inPot = {}; }
@@ -405,6 +418,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       s.latest = entry; s.pot = 0; s.inPot = {};
       return s;
     },
+    dismiss(s, pid){ const p = s.players[pid]; if (p && !((s.inPot||{})[pid] > 0 && s.pot > 0)){ p.left = true; p.out = true; } return s; },
     deposit(s, pid, amt){ if (s.players[pid] && amt > 0){ s.players[pid].chips += amt; s.players[pid].start += amt; } return s; },
     addPlayer(s, name, start, fixedId, av){
       const id = fixedId || ("p" + rid(6));
@@ -622,12 +636,30 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       $("actChips").textContent = fmt(sp.chips);
       $("actNet").textContent = (net>0?"+":"") + fmt(net);
       $("actNet").className = "note num " + (net>0?"up":net<0?"down":"");
-      $("actBets").replaceChildren(...betsFor(s).map(a => h("button", {class:"btn-sm num", disabled: sp.out,
+      const bootDue = !(s.pot > 0) && s.boot > 0 ? s.boot : 0;
+      $("actBets").replaceChildren(...betsFor(s).map(a => h("button", {class:"btn-sm num", disabled: sp.out || a + bootDue > sp.chips,
         onclick:() => mutate(x => L.bet(x, pid, a), `${sp.name} bet ${fmt(a)}`), text:"+" + fmt(a)})));
       $("actBetBtn").disabled = sp.out;
       $("actOut").textContent = sp.out ? "Back in the game" : "Sit out next rounds";
       $("actRemove").disabled = inPot > 0;
     }
+    // Out of money: between rounds, ask to add cash or dismiss
+    const isBroke = p => !p.left && (p.chips <= 0 || (s.boot > 0 && p.chips < s.boot));
+    const broke = s.pot > 0 ? [] : players.filter(isBroke);
+    $("brokePanel").hidden = !broke.length;
+    $("brokeList").replaceChildren(...broke.map(p => {
+      const inId = "topup-" + p.id;
+      return h("div", {class:"broke-row"},
+        h("div", {}, h("b", {text:p.name}), h("span", {class:"note num", text:` has ${fmt(Math.max(0,p.chips))} points left${s.boot > 0 ? ` (boot is ${fmt(s.boot)})` : ""}.`})),
+        h("div", {class:"row"},
+          h("input", {id:inId, type:"number", inputmode:"numeric", min:"1", placeholder:"Cash added (Rs)", style:"flex:1 1 120px", "aria-label":`Cash ${p.name} is adding`}),
+          h("button", {class:"btn-sm btn-brass", onclick:() => { const v = int($(inId).value, 0); if (v > 0) mutate(x => (x.players[p.id] && (x.players[p.id].out = false), L.deposit(x, p.id, v)), `${p.name} added Rs ${fmt(v)}`); else $(inId).focus(); }, text:"Add money"}),
+          h("button", {class:"btn-sm btn-ghost", onclick:() => mutate(x => L.dismiss(x, p.id), `${p.name} left the table`), text:"Dismiss"})));
+    }));
+    ring.querySelectorAll(".pseat").forEach(el => {
+      const p = s.players[el.dataset.pid];
+      if (p && isBroke(p)) { el.classList.add("broke"); el.append(h("span", {class:"lowmark", text:"Out of money"})); }
+    });
     animate(s, pos);
   }
 
@@ -719,7 +751,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     $("rName").textContent = s.name || "Family table";
     $("potAmt").textContent = fmt(s.pot);
     $("roundNo").textContent = s.round || 0;
-    const players = ordered(s), active = players.filter(p => !p.out);
+    const everyone = ordered(s), players = everyone.filter(p => !p.left), active = players.filter(p => !p.out);
     $("undoBtn").disabled = !s.prev;
     if (document.activeElement !== $("bootIn")) $("bootIn").value = s.boot || 0;
     const hasBoot = s.boot > 0;
@@ -745,14 +777,14 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     renderTable(s, players, seated ? mine.pid : null);
 
     const st = $("settle"); st.replaceChildren();
-    $("settlePanel").hidden = !players.length;
-    const dep = players.reduce((t,p) => t + p.start, 0), pts = players.reduce((t,p) => t + p.chips, 0) + (s.pot||0);
+    $("settlePanel").hidden = !everyone.length;
+    const dep = everyone.reduce((t,p) => t + p.start, 0), pts = everyone.reduce((t,p) => t + p.chips, 0) + (s.pot||0);
     $("settleTotal").textContent = `Cash held Rs ${fmt(dep)}`;
-    for (const p of players){
+    for (const p of everyone){
       const net = p.chips - p.start;
       st.append(h("li", {},
         h("span", {class:"tag num " + (net>0?"up":net<0?"down":""), text:(net>0?"+":"") + fmt(net)}),
-        h("span", {class:"who", text:p.name}),
+        h("span", {class:"who", text:p.name + (p.left ? " (left the table)" : "")}),
         h("span", {class:"num", style:"font-weight:700", text:"Rs " + fmt(Math.max(0,p.chips))})));
     }
     $("settleNote").textContent = s.pot > 0 ? `Rs ${fmt(s.pot)} is still in the pot. Record the winner before settling.` :
@@ -796,7 +828,10 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
   $("jCode").addEventListener("keydown", e => { if (e.key === "Enter") $("joinBtn").click(); });
   $("leaveBtn").onclick = leave;
   $("undoBtn").onclick = undo;
-  $("actBetBtn").onclick = () => { const v = int($("actBetIn").value, 0), pid = selSeat; if (v > 0 && pid) { mutate(x => L.bet(x, pid, v), `${state.players[pid].name} bet ${fmt(v)}`); $("actBetIn").value = ""; } };
+  $("actBetBtn").onclick = () => { const v = int($("actBetIn").value, 0), pid = selSeat; const p = pid && state.players[pid];
+    const due = !(state.pot > 0) && state.boot > 0 ? state.boot : 0;
+    if (p && v > 0 && v + due > p.chips) { toast(`${p.name} only has ${fmt(p.chips)} points${due ? ` (boot ${fmt(due)} is due first)` : ""}.`); return; }
+    if (v > 0 && pid) { mutate(x => L.bet(x, pid, v), `${state.players[pid].name} bet ${fmt(v)}`); $("actBetIn").value = ""; } };
   $("actDepBtn").onclick = () => { const v = int($("actDepIn").value, 0), pid = selSeat; if (v > 0 && pid) { mutate(x => L.deposit(x, pid, v), `${state.players[pid].name} deposited Rs ${fmt(v)}`); $("actDepIn").value = ""; } };
   $("actOut").onclick = () => { const pid = selSeat; if (pid) mutate(x => (x.players[pid].out = !x.players[pid].out, x), null); };
   $("actRemove").onclick = () => { const pid = selSeat; if (pid) { const n = state.players[pid].name; selSeat = null; mutate(x => (delete x.players[pid], x), `Removed ${n}`); } };
