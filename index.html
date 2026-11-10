@@ -205,10 +205,10 @@ header > div:first-child{min-width:0}
 .winner{border-radius:18px;background:linear-gradient(110deg,var(--brass-soft) 0%,var(--brass-soft) 40%,rgba(255,236,170,.35) 50%,var(--brass-soft) 60%) 0 0/250% 100%,var(--brass-soft);box-shadow:0 8px 24px rgba(0,0,0,.15)}
 @media (prefers-reduced-motion:no-preference){.winner{animation:pop .35s ease-out, shine 3.2s ease-in-out 1}@keyframes shine{from{background-position:100% 0}to{background-position:-50% 0}}}
 /* Who won: avatar buttons */
-.won-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.won-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
 .won-grid .wbtn{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;min-height:56px;border-radius:999px;background:linear-gradient(180deg,#f1c766,var(--brass));color:var(--brass-ink);border:1px solid #9a6d12;box-shadow:0 3px 0 #8a6210,0 6px 12px rgba(0,0,0,.2);text-align:left;white-space:nowrap}
 .won-grid .wbtn:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6210}
-.wface{width:42px;height:42px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;border:2px solid rgba(255,255,255,.7)}
+.wface{width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;border:2px solid rgba(255,255,255,.7)}
 .wface svg{width:100%;height:100%;display:block}
 .wname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .wcrown{font-size:18px;opacity:.8}
@@ -705,7 +705,7 @@ header > div:first-child{min-width:0}
     $("wonGrid").replaceChildren(...active.map(p => {
       const i = players.indexOf(p), face = h("span", {class:"wface"});
       if (validAv(p.av)) face.innerHTML = avatarSVG(p.av); else { face.style.background = PALETTE[i % PALETTE.length]; face.textContent = initials(p.name); }
-      return h("button", {class:"wbtn", onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`)}, face, h("span", {class:"wname", text:p.name}), h("span", {class:"wcrown", text:"♛"}));
+      return h("button", {class:"wbtn", onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`)}, face, h("span", {class:"wname", text:p.name}));
     }));
 
     // Selected player's actions
