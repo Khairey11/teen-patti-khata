@@ -78,10 +78,33 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 .table button.btn-ghost{color:var(--on-felt);border-color:rgba(255,255,255,.35)}
 
 /* Seats */
-.seats{display:flex;flex-direction:column;gap:10px}
-.seat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
-.seat.out{opacity:.6}
-.seat-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+/* Round table */
+.arena-wrap{display:flex;justify-content:center}
+.arena{position:relative;width:100%;max-width:460px;aspect-ratio:1/1.08}
+.felt{position:absolute;inset:16% 15%;border-radius:50%;background:radial-gradient(80% 70% at 50% 40%,var(--felt) 0%,var(--felt-2) 100%);border:6px solid var(--brass);box-shadow:inset 0 0 0 3px rgba(0,0,0,.18),0 10px 28px rgba(0,0,0,.25);color:var(--on-felt);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;padding:8%}
+.felt .eyebrow{color:var(--on-felt);opacity:.75}
+.felt .amt{font-family:var(--display);font-size:clamp(34px,11vw,52px);line-height:1}
+.felt-sub{font-size:13px;opacity:.8}
+.pseat{position:absolute;transform:translate(-50%,-50%);width:84px;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:0;min-height:0;font:inherit;color:var(--fg);cursor:pointer}
+.pseat .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:16px;color:#fff;border:3px solid var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.25);position:relative}
+.pseat.sel .av{border-color:var(--brass);box-shadow:0 0 0 3px var(--brass)}
+.pseat.out{opacity:.45}
+.pseat .nm{font-size:13px;font-weight:700;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 8px}
+.pseat .pt{font-size:13px;font-weight:700}
+.pseat .crownmark{position:absolute;top:-14px;left:50%;transform:translateX(-50%);color:var(--brass);font-size:16px}
+.pseat .youmark{position:absolute;bottom:-6px;right:-10px;font-size:9px;font-weight:800;letter-spacing:.05em;background:var(--brass);color:var(--brass-ink);border-radius:999px;padding:1px 5px}
+.stake{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--on-felt);background:rgba(0,0,0,.35);border-radius:999px;padding:2px 8px 2px 3px;pointer-events:none}
+.coin{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe7a3,var(--brass) 60%,#8a6210);border:2px dashed rgba(255,255,255,.65);box-sizing:border-box;flex:none}
+#fx{position:absolute;inset:0;pointer-events:none}
+#fx .coin{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px}
+.won-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.won-grid button{background:var(--brass);color:var(--brass-ink);border-color:var(--brass);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
+.inline{flex-direction:row;align-items:center;gap:8px;color:var(--fg)}
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.prow button{min-height:42px;padding:6px 12px}
 .seat .name{font-weight:700;font-size:18px;overflow-wrap:anywhere;background:none;border:0;padding:0;min-height:0;text-align:left;border-radius:4px}
 .seat .meta{font-size:13px;color:var(--muted)}
 .chips{font-size:22px;font-weight:700}
@@ -123,13 +146,16 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
   <!-- Lobby -->
   <section id="lobby" class="wrap" style="gap:18px">
     <div class="panel">
-      <h2>Create a room</h2>
-      <p class="note" style="margin:0">Each player hands over cash as a deposit and gets the same amount in points: Rs 1 = 1 point.</p>
+      <h2>Start a game</h2>
+      <p class="note" style="margin:0">Add everyone playing and the cash each person deposited (Rs 1 = 1 point). You can play on this phone alone, or share the link later so others can follow along.</p>
       <div class="grid2">
-        <label for="cName">Room name<input id="cName" maxlength="40" placeholder="Tihar night at home"></label>
-        <label for="cBoot">Boot (0 = none)<input id="cBoot" type="number" inputmode="numeric" min="0" value="0"></label>
+        <label for="cName">Game name<input id="cName" maxlength="40" placeholder="Tihar night at home"></label>
+        <label for="cBoot">Boot (0 = none)<input id="cBoot" type="number" inputmode="numeric" min="0" value="10"></label>
       </div>
-      <button id="createBtn" class="btn-felt">Create room</button>
+      <div class="eyebrow">Players</div>
+      <div id="cPlayers" class="plist"></div>
+      <button id="cAddRow" class="btn-ghost btn-sm" style="align-self:flex-start">+ Add another player</button>
+      <button id="createBtn" class="btn-felt">Start game</button>
       <div id="createErr" class="err" hidden></div>
     </div>
     <div class="panel">
@@ -173,24 +199,60 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
       </div>
     </div>
 
-    <div class="table">
-      <div class="pot">
-        <div>
+    <div class="arena-wrap">
+      <div class="arena" id="arena">
+        <div class="felt">
           <div class="eyebrow">Pot · Round <span id="roundNo" class="num">0</span></div>
           <div class="amt num" id="potAmt">0</div>
+          <div class="felt-sub num" id="bootTag"></div>
         </div>
-        <label class="chip" for="bootIn" style="color:var(--on-felt);flex-direction:row;align-items:center">Boot
-          <input id="bootIn" type="number" inputmode="numeric" min="0" class="num" aria-label="Boot amount, 0 for none">
-        </label>
+        <div id="ring"></div>
+        <div id="fx" aria-hidden="true"></div>
       </div>
-      <div class="row">
-        <button id="collectBtn" class="btn-brass" style="flex:1 1 200px">New round · collect boot</button>
-        <button id="undoBtn" class="btn-ghost">Undo last</button>
-      </div>
-      <div id="tableNote" class="note" style="color:var(--on-felt);opacity:.8;margin:0"></div>
     </div>
 
-    <div class="seats" id="seats"></div>
+    <div class="panel" id="wonPanel" hidden>
+      <h2 id="wonTitle">Who won?</h2>
+      <div class="won-grid" id="wonGrid"></div>
+    </div>
+
+    <div class="panel" id="actPanel" hidden>
+      <div class="row" style="justify-content:space-between">
+        <div style="min-width:0">
+          <div class="eyebrow">Selected seat</div>
+          <h2 id="actName" style="overflow-wrap:anywhere"></h2>
+          <div class="note num" id="actMeta"></div>
+        </div>
+        <div style="text-align:right"><div class="chips num" id="actChips"></div><div class="note num" id="actNet"></div></div>
+      </div>
+      <div class="bet-grid" id="actBets"></div>
+      <details id="actMore">
+        <summary>More for this player</summary>
+        <div class="more">
+          <div class="row">
+            <input id="actBetIn" type="number" inputmode="numeric" min="1" placeholder="Custom bet" style="flex:1 1 120px" aria-label="Custom bet">
+            <button id="actBetBtn" class="btn-sm">Bet</button>
+          </div>
+          <div class="row">
+            <input id="actDepIn" type="number" inputmode="numeric" min="1" placeholder="More cash (Rs)" style="flex:1 1 120px" aria-label="More cash deposited">
+            <button id="actDepBtn" class="btn-sm">Add deposit</button>
+          </div>
+          <div class="row">
+            <button id="actOut" class="btn-sm btn-ghost"></button>
+            <button id="actRemove" class="btn-sm btn-ghost">Remove player</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <label class="inline" for="bootIn">Boot <input id="bootIn" type="number" inputmode="numeric" min="0" class="num" style="width:92px" aria-label="Boot amount, 0 for none"></label>
+        <button id="collectBtn" class="btn-brass" style="flex:1 1 160px">Collect boot</button>
+        <button id="undoBtn" class="btn-ghost">Undo last</button>
+      </div>
+      <div id="tableNote" class="note"></div>
+    </div>
 
     <div class="panel" id="addPanel">
       <h2>Add a player</h2>
@@ -241,7 +303,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
   const ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const HIST_MAX = 60;
   const betsFor = s => s.boot > 0 ? [1, 2, 4, 8].map(m => m * s.boot) : [10, 20, 50, 100];
-  let sb = null, code = null, state = null, channel = null, pollT = null, loadTimer = null, openSeat = null;
+  let sb = null, code = null, state = null, channel = null, pollT = null, loadTimer = null, selSeat = null, prevView = null;
   let queue = Promise.resolve();
 
   const store = {
@@ -353,7 +415,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 
   async function openRoom(c){
     closeRoom();
-    code = c; state = null; openSeat = null; store.set(c);
+    code = c; state = null; selSeat = null; prevView = null; store.set(c);
     if (location.hash !== "#" + c) history.replaceState(null, "", "#" + c);
     $("lobby").hidden = true; $("room").hidden = false;
     $("rCode").textContent = c; $("rCodeSmall").textContent = c;
@@ -378,25 +440,124 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
   }
   function leave(){ closeRoom(); code = null; state = null; store.set(null); history.replaceState(null, "", location.pathname); $("room").hidden = true; $("lobby").hidden = false; status(""); }
 
+  function addRow(name, dep){
+    const i = $("cPlayers").children.length;
+    const row = h("div", {class:"prow"},
+      h("input", {id:"cpn" + i, maxlength:"24", placeholder:"Player " + (i+1) + " name", "aria-label":"Player " + (i+1) + " name", value: name || ""}),
+      h("input", {id:"cpd" + i, type:"number", inputmode:"numeric", min:"1", placeholder:"Rs deposit", "aria-label":"Player " + (i+1) + " deposit", value: dep || ""}),
+      h("button", {class:"btn-ghost", "aria-label":"Remove this player", onclick:() => row.remove(), text:"✕"}));
+    $("cPlayers").append(row);
+  }
   async function createRoom(){
     showErr("createErr", "");
     const boot = Math.max(0, int($("cBoot").value, 0));
+    const seats = {}; let bad = false, n = 0;
+    for (const row of $("cPlayers").children){
+      const [ni, di] = row.querySelectorAll("input");
+      const name = ni.value.trim(), dep = int(di.value, 0);
+      if (!name && !di.value) continue;
+      if (!name || dep <= 0) { bad = true; continue; }
+      seats["p" + rid(6)] = {name, chips:dep, start:dep, wins:0, out:false, joined:Date.now() + (n++)};
+    }
+    if (bad) return showErr("createErr", "Each player needs a name and a deposit above 0.");
     $("createBtn").disabled = true;
     try {
       for (let i = 0; i < 6; i++){
         const c = rid(5);
         const room = {code:c, name:($("cName").value.trim() || "Family table"), startChips:0, boot, pot:0, round:0,
-          players:{}, inPot:{}, history:[], latest:null, rev:0, created:Date.now(), updated:Date.now()};
+          players:seats, inPot:{}, history:[], latest:null, rev:0, created:Date.now(), updated:Date.now()};
         const { error } = await sb.from(TABLE).insert({ code:c, data:room });
-        if (!error){ await openRoom(c); return; }
+        if (!error){ me.set(c, { host:true }); await openRoom(c); return; }
         if (error.code !== "23505") throw error; // 23505 = code already taken, try another
       }
       throw new Error("no code");
-    } catch(e){ showErr("createErr", "Couldn't create the room. Check your internet and try again."); }
+    } catch(e){ showErr("createErr", "Couldn't start the game. Check your internet and try again."); }
     finally { $("createBtn").disabled = false; }
   }
 
   // ---------- Render ----------
+  const PALETTE = ["#c2410c","#7c3aed","#0e7490","#b91c1c","#15803d","#a16207","#be185d","#1d4ed8","#4d7c0f","#9333ea"];
+  const initials = n => n.trim().split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase() || "?";
+  const reduceMotion = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ return false; } };
+
+  function seatPos(players, myPid){
+    // Your own seat sits at the bottom of the table; everyone else goes round clockwise.
+    const n = players.length, start = Math.max(0, players.findIndex(p => p.id === myPid));
+    const pos = {};
+    players.forEach((p, i) => {
+      const k = (i - start + n) % n, a = Math.PI/2 + k * 2*Math.PI / n;
+      pos[p.id] = { x: 50 + 41*Math.cos(a), y: 50 + 41*Math.sin(a), sx: 50 + 24*Math.cos(a), sy: 50 + 22*Math.sin(a) };
+    });
+    return pos;
+  }
+
+  function renderTable(s, players, myPid){
+    const ring = $("ring"); ring.replaceChildren();
+    const pos = seatPos(players, myPid);
+    if (!selSeat || !s.players[selSeat]) selSeat = myPid || (players.find(p => !p.out) || players[0] || {}).id || null;
+    players.forEach((p, i) => {
+      const at = pos[p.id], inPot = (s.inPot||{})[p.id] || 0;
+      const isWinner = s.latest && s.latest.pid === p.id && !(s.pot > 0);
+      ring.append(h("button", {class:"pseat" + (p.id === selSeat ? " sel" : "") + (p.out ? " out" : ""), style:`left:${at.x}%;top:${at.y}%`,
+          "data-pid": p.id, "aria-pressed": String(p.id === selSeat), "aria-label": `${p.name}, ${fmt(p.chips)} points`,
+          onclick:() => { selSeat = p.id; render(); }},
+        h("span", {class:"av", style:`background:${PALETTE[i % PALETTE.length]}`, text:initials(p.name)},
+          isWinner ? h("span", {class:"crownmark", text:"♛"}) : null,
+          p.id === myPid ? h("span", {class:"youmark", text:"YOU"}) : null),
+        h("span", {class:"nm", text:p.name}),
+        h("span", {class:"pt num", text:fmt(p.chips)})));
+      if (inPot > 0) ring.append(h("div", {class:"stake num", style:`left:${at.sx}%;top:${at.sy}%`}, h("span", {class:"coin"}), String(fmt(inPot))));
+    });
+
+    // Who won? one tap per player
+    const active = players.filter(p => !p.out);
+    $("wonPanel").hidden = !(s.pot > 0);
+    $("wonTitle").textContent = `Who won Rs ${fmt(s.pot)}?`;
+    $("wonGrid").replaceChildren(...active.map(p => h("button", {onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`), text:"♛ " + p.name})));
+
+    // Selected player's actions
+    const sp = selSeat && s.players[selSeat];
+    $("actPanel").hidden = !sp;
+    if (sp){
+      const net = sp.chips - sp.start, inPot = (s.inPot||{})[selSeat] || 0, pid = selSeat;
+      $("actName").textContent = sp.name;
+      $("actMeta").textContent = `Deposited Rs ${fmt(sp.start)} · in pot ${fmt(inPot)}${sp.out ? " · sitting out" : ""}`;
+      $("actChips").textContent = fmt(sp.chips);
+      $("actNet").textContent = (net>0?"+":"") + fmt(net);
+      $("actNet").className = "note num " + (net>0?"up":net<0?"down":"");
+      $("actBets").replaceChildren(...betsFor(s).map(a => h("button", {class:"btn-sm num", disabled: sp.out,
+        onclick:() => mutate(x => L.bet(x, pid, a), `${sp.name} bet ${fmt(a)}`), text:"+" + fmt(a)})));
+      $("actBetBtn").disabled = sp.out;
+      $("actOut").textContent = sp.out ? "Back in the game" : "Sit out next rounds";
+      $("actRemove").disabled = inPot > 0;
+    }
+    animate(s, pos);
+  }
+
+  // Chips slide from seats into the pot when money goes in, and from the pot to the winner.
+  function animate(s, pos){
+    const view = { inPot: Object.assign({}, s.inPot||{}), latestT: s.latest ? s.latest.t : null, pos };
+    const prev = prevView; prevView = view;
+    if (!prev || reduceMotion()) return;
+    const fx = $("fx"), center = {x:50, y:50};
+    const fly = (from, to, delay) => {
+      const c = h("div", {class:"coin"}); c.style.left = from.x + "%"; c.style.top = from.y + "%"; fx.append(c);
+      const dx = (to.x - from.x) * fx.clientWidth / 100, dy = (to.y - from.y) * fx.clientHeight / 100;
+      const anim = c.animate([{transform:"translate(0,0) scale(1)", opacity:1}, {transform:`translate(${dx}px,${dy}px) scale(.85)`, opacity:.95}],
+        {duration:520, delay, easing:"cubic-bezier(.3,.7,.2,1)", fill:"forwards"});
+      anim.onfinish = () => c.remove(); setTimeout(() => c.remove(), 1500 + delay);
+    };
+    if (view.latestT && view.latestT !== prev.latestT && s.latest && pos[s.latest.pid]){
+      const to = pos[s.latest.pid];
+      for (let i = 0; i < 8; i++) fly({x:center.x + (i%3-1)*3, y:center.y + (i%2)*3}, to, i*60);
+      return;
+    }
+    for (const [pid, amt] of Object.entries(view.inPot)){
+      const before = (prev.inPot||{})[pid] || 0;
+      if (amt > before && pos[pid]){ const from = pos[pid]; for (let i = 0; i < 3; i++) fly(from, center, i*90); }
+    }
+  }
+
   function render(){
     if (!state) return;
     const s = state;
@@ -409,8 +570,9 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     const hasBoot = s.boot > 0;
     $("collectBtn").hidden = !hasBoot;
     $("collectBtn").disabled = s.pot > 0 || active.length < 2;
+    $("bootTag").textContent = hasBoot ? `Boot ${fmt(s.boot)}` : "No boot";
     $("tableNote").textContent = players.length < 2 ? "Seat at least two players to start." :
-      s.pot > 0 ? "Keep betting from each seat, then tap the winner. The whole pot goes to them." :
+      s.pot > 0 ? "Tap a seat to bet for that player. When the round ends, tap the winner's name." :
       hasBoot ? `Boot ${fmt(s.boot)} is collected from all ${active.length} players at the start of every round. Change it any time.` :
       "Tap a bet on any seat to start the next round.";
 
@@ -420,39 +582,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 
     const mine = me.get(code);
     const seated = mine && mine.pid && s.players[mine.pid];
-    $("joinCard").hidden = !!seated || !!(mine && mine.watch);
-    const box = $("seats"); box.replaceChildren();
-    if (!players.length) box.append(h("div", {class:"panel note", text:"No players yet. Add everyone at the table below with their starting points."}));
-    for (const p of players){
-      const net = p.chips - p.start, inPot = (s.inPot||{})[p.id] || 0, open = openSeat === p.id;
-      const seat = h("div", {class:"seat" + (p.out ? " out" : "")},
-        h("div", {class:"seat-top"},
-          h("div", {style:"min-width:0"},
-            h("button", {class:"name", "aria-expanded": String(open), onclick:() => { openSeat = open ? null : p.id; render(); }, text:p.name + (open ? " ▴" : " ▾")}, ...(seated && mine.pid === p.id ? [h("span", {class:"you", text:"You"})] : [])),
-            h("div", {class:"meta num", text:`Deposited Rs ${fmt(p.start)} · in pot ${fmt(inPot)}${p.out ? " · sitting out" : ""}`})),
-          h("div", {style:"text-align:right"},
-            h("div", {class:"chips num", text:fmt(p.chips)}),
-            h("div", {class:"meta num " + (net>0?"up":net<0?"down":""), text:(net>0?"+":"") + fmt(net)}))),
-        h("div", {class:"seat-actions"},
-          ...betsFor(s).map(a => h("button", {class:"btn-sm num", disabled: p.out,
-            onclick:() => mutate(x => L.bet(x, p.id, a), `${p.name} bet ${fmt(a)}`), text:"+" + fmt(a)})),
-          h("button", {class:"btn-sm win-btn", disabled: s.pot<=0 || p.out,
-            onclick:() => mutate(x => L.win(x, p.id), `${p.name} won ${fmt(s.pot)}`), text: s.pot>0 ? `Wins ${fmt(s.pot)}` : "Wins"})));
-      if (open){
-        const betId = "bet-" + p.id, topId = "top-" + p.id;
-        seat.append(h("div", {class:"more"},
-          h("div", {class:"row"},
-            h("input", {id:betId, type:"number", inputmode:"numeric", min:"1", placeholder:"Custom bet", style:"flex:1 1 120px", "aria-label":"Custom bet"}),
-            h("button", {class:"btn-sm", disabled: p.out, onclick:() => { const v = int($(betId).value,0); if (v>0) mutate(x => L.bet(x, p.id, v), `${p.name} bet ${fmt(v)}`); }, text:"Bet"})),
-          h("div", {class:"row"},
-            h("input", {id:topId, type:"number", inputmode:"numeric", min:"1", placeholder:"More cash (Rs)", style:"flex:1 1 120px", "aria-label":"More cash deposited"}),
-            h("button", {class:"btn-sm", onclick:() => { const v = int($(topId).value,0); if (v>0) mutate(x => L.deposit(x, p.id, v), `${p.name} deposited Rs ${fmt(v)}`); }, text:"Add deposit"})),
-          h("div", {class:"row"},
-            h("button", {class:"btn-sm btn-ghost", onclick:() => mutate(x => (x.players[p.id].out = !x.players[p.id].out, x), null), text: p.out ? "Back in the game" : "Sit out next rounds"}),
-            h("button", {class:"btn-sm btn-ghost", disabled: inPot>0, onclick:() => mutate(x => (delete x.players[p.id], x), `Removed ${p.name}`), text:"Remove player"}))));
-      }
-      box.append(seat);
-    }
+    $("joinCard").hidden = !!seated || !!(mine && (mine.watch || mine.host));
+    renderTable(s, players, seated ? mine.pid : null);
 
     const st = $("settle"); st.replaceChildren();
     $("settlePanel").hidden = !players.length;
@@ -488,6 +619,12 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
   $("jCode").addEventListener("keydown", e => { if (e.key === "Enter") $("joinBtn").click(); });
   $("leaveBtn").onclick = leave;
   $("undoBtn").onclick = undo;
+  $("actBetBtn").onclick = () => { const v = int($("actBetIn").value, 0), pid = selSeat; if (v > 0 && pid) { mutate(x => L.bet(x, pid, v), `${state.players[pid].name} bet ${fmt(v)}`); $("actBetIn").value = ""; } };
+  $("actDepBtn").onclick = () => { const v = int($("actDepIn").value, 0), pid = selSeat; if (v > 0 && pid) { mutate(x => L.deposit(x, pid, v), `${state.players[pid].name} deposited Rs ${fmt(v)}`); $("actDepIn").value = ""; } };
+  $("actOut").onclick = () => { const pid = selSeat; if (pid) mutate(x => (x.players[pid].out = !x.players[pid].out, x), null); };
+  $("actRemove").onclick = () => { const pid = selSeat; if (pid) { const n = state.players[pid].name; selSeat = null; mutate(x => (delete x.players[pid], x), `Removed ${n}`); } };
+  $("cAddRow").onclick = () => { addRow(); $("cPlayers").lastElementChild.querySelector("input").focus(); };
+  addRow(); addRow();
   $("collectBtn").onclick = () => mutate(x => L.collectBoot(x), `Round started · boot ${fmt(state.boot)} collected`);
   $("bootIn").addEventListener("change", e => {
     const v = Math.max(0, int(e.target.value, state.boot || 0));
