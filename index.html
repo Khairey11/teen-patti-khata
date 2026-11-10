@@ -423,6 +423,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
   function accept(next){
     if (!next) return;
     if (state && (next.rev||0) < (state.rev||0)) return; // ignore stale copies
+    if (state && next.rev === state.rev && next.updated === state.updated) return; // our own save echoing back: nothing new
     state = next; render();
   }
   // Save only if nobody else saved since we read (rev check); otherwise refetch and re-apply.
