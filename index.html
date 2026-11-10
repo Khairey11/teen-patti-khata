@@ -846,7 +846,7 @@ header > div:first-child{min-width:0}
     $("undoBtn").disabled = !s.prev;
     if (document.activeElement !== $("bootIn")) $("bootIn").value = s.boot || 0;
     const hasBoot = s.boot > 0;
-    $("collectBtn").hidden = !hasBoot;
+    $("collectBtn").hidden = !hasBoot || s.pot > 0;
     $("collectBtn").disabled = s.pot > 0 || active.length < 2;
     $("bootTag").textContent = hasBoot ? `Boot ${fmt(s.boot)} each` : "No boot";
     $("tableNote").textContent = players.length < 2 ? "Seat at least two players to start." :
