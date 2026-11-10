@@ -229,7 +229,7 @@ header > div:first-child{min-width:0}
 .toast{border-radius:14px;font-weight:600}
 @media (max-width:380px){.chipbtn{width:56px;height:56px;min-height:56px;font-size:14px}.pseat{width:80px}.pseat .av{width:48px;height:48px}}
 
-.reset-btn{align-self:flex-start;color:var(--loss);border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
+.reset-btn{color:var(--loss);border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
 .reset-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--loss);border-radius:12px;padding:12px}
 .reset-yes{background:#b3362f;border-color:#b3362f;color:#fff}
 </style>
@@ -278,7 +278,18 @@ header > div:first-child{min-width:0}
         <div class="eyebrow">Room <span id="rCodeSmall" class="num"></span></div>
         <h2 id="rName" style="overflow-wrap:anywhere"></h2>
       </div>
-      <button id="leaveBtn" class="btn-ghost btn-sm">Leave room</button>
+      <div class="row" style="gap:8px">
+        <button id="resetBtn" class="btn-ghost btn-sm reset-btn">↺ Reset game</button>
+        <button id="leaveBtn" class="btn-ghost btn-sm">Leave room</button>
+      </div>
+    </div>
+    <div id="resetBox" class="reset-box" hidden>
+      <b>Reset this game?</b>
+      <p class="note" style="margin:0">This removes all players, their points, the pot and the winnings record. The room link, name and boot stay the same. You can tap Undo straight after if it was a mistake.</p>
+      <div class="row">
+        <button id="resetYes" class="btn-sm reset-yes">Yes, reset everything</button>
+        <button id="resetNo" class="btn-sm btn-ghost">Cancel</button>
+    </div>
     </div>
 
     <div id="joinCard" class="panel" hidden style="border:2px solid var(--brass)">
@@ -363,15 +374,6 @@ header > div:first-child{min-width:0}
         <button id="undoBtn" class="btn-ghost">Undo last</button>
       </div>
       <div id="tableNote" class="note"></div>
-      <button id="resetBtn" class="btn-ghost btn-sm reset-btn">Reset game</button>
-      <div id="resetBox" class="reset-box" hidden>
-        <b>Reset this game?</b>
-        <p class="note" style="margin:0">This removes all players, their points, the pot and the winnings record. The room link, name and boot stay the same. You can tap Undo straight after if it was a mistake.</p>
-        <div class="row">
-          <button id="resetYes" class="btn-sm reset-yes">Yes, reset everything</button>
-          <button id="resetNo" class="btn-sm btn-ghost">Cancel</button>
-        </div>
-      </div>
     </div>
 
     <div class="panel" id="addPanel">
