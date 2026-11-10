@@ -228,6 +228,10 @@ header > div:first-child{min-width:0}
 .btn-felt:active,.btn-brass:active{transform:translateY(2px);box-shadow:none}
 .toast{border-radius:14px;font-weight:600}
 @media (max-width:380px){.chipbtn{width:56px;height:56px;min-height:56px;font-size:14px}.pseat{width:80px}.pseat .av{width:48px;height:48px}}
+
+.reset-btn{align-self:flex-start;color:var(--loss);border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
+.reset-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--loss);border-radius:12px;padding:12px}
+.reset-yes{background:var(--loss);border-color:var(--loss);color:#fff}
 </style>
 </head>
 <body>
@@ -359,6 +363,15 @@ header > div:first-child{min-width:0}
         <button id="undoBtn" class="btn-ghost">Undo last</button>
       </div>
       <div id="tableNote" class="note"></div>
+      <button id="resetBtn" class="btn-ghost btn-sm reset-btn">Reset game</button>
+      <div id="resetBox" class="reset-box" hidden>
+        <b>Reset this game?</b>
+        <p class="note" style="margin:0">This removes all players, their points, the pot and the winnings record. The room link, name and boot stay the same. You can tap Undo straight after if it was a mistake.</p>
+        <div class="row">
+          <button id="resetYes" class="btn-sm reset-yes">Yes, reset everything</button>
+          <button id="resetNo" class="btn-sm btn-ghost">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <div class="panel" id="addPanel">
@@ -494,6 +507,10 @@ header > div:first-child{min-width:0}
       if (!(s.boot > 0) || s.pot > 0) return s;
       const seated = ordered(s).filter(p => !p.left && !p.out);
       if (seated.length >= 2 && seated.every(p => p.chips >= s.boot)) L.collectBoot(s);
+      return s;
+    },
+    reset(s){
+      s.players = {}; s.inPot = {}; s.pot = 0; s.round = 0; s.history = []; s.latest = null;
       return s;
     },
     dismiss(s, pid){ const p = s.players[pid]; if (p && !((s.inPot||{})[pid] > 0 && s.pot > 0)){ p.left = true; p.out = true; } return s; },
@@ -919,6 +936,12 @@ header > div:first-child{min-width:0}
   $("jCode").addEventListener("keydown", e => { if (e.key === "Enter") $("joinBtn").click(); });
   $("leaveBtn").onclick = leave;
   $("undoBtn").onclick = undo;
+  $("resetBtn").onclick = () => { $("resetBox").hidden = false; $("resetBtn").hidden = true; $("resetNo").focus(); };
+  $("resetNo").onclick = () => { $("resetBox").hidden = true; $("resetBtn").hidden = false; };
+  $("resetYes").onclick = () => {
+    $("resetBox").hidden = true; $("resetBtn").hidden = false; selSeat = null; prevView = null;
+    mutate(x => L.reset(x), "Game reset");
+  };
   $("actBetBtn").onclick = () => { const v = int($("actBetIn").value, 0), pid = selSeat; const p = pid && state.players[pid];
     const due = !(state.pot > 0) && state.boot > 0 ? state.boot : 0;
     if (p && v > 0 && v + due > p.chips) { toast(`${p.name} only has ${fmt(p.chips)} points${due ? ` (boot ${fmt(due)} is due first)` : ""}.`); return; }
