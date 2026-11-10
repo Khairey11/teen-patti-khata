@@ -416,6 +416,15 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       const entry = {pid, name:p.name, amt, net: amt - ((s.inPot||{})[pid]||0), round:s.round||0, t:Date.now()};
       s.history = [entry, ...(s.history||[])].slice(0, HIST_MAX);
       s.latest = entry; s.pot = 0; s.inPot = {};
+      L.autoBoot(s);
+      return s;
+    },
+    // After a win (or once a short player tops up / leaves), start the next round by collecting the boot,
+    // but only if every seated player can cover it.
+    autoBoot(s){
+      if (!(s.boot > 0) || s.pot > 0) return s;
+      const seated = ordered(s).filter(p => !p.left && !p.out);
+      if (seated.length >= 2 && seated.every(p => p.chips >= s.boot)) L.collectBoot(s);
       return s;
     },
     dismiss(s, pid){ const p = s.players[pid]; if (p && !((s.inPot||{})[pid] > 0 && s.pot > 0)){ p.left = true; p.out = true; } return s; },
@@ -653,8 +662,8 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
         h("div", {}, h("b", {text:p.name}), h("span", {class:"note num", text:` has ${fmt(Math.max(0,p.chips))} points left${s.boot > 0 ? ` (boot is ${fmt(s.boot)})` : ""}.`})),
         h("div", {class:"row"},
           h("input", {id:inId, type:"number", inputmode:"numeric", min:"1", placeholder:"Cash added (Rs)", style:"flex:1 1 120px", "aria-label":`Cash ${p.name} is adding`}),
-          h("button", {class:"btn-sm btn-brass", onclick:() => { const v = int($(inId).value, 0); if (v > 0) mutate(x => (x.players[p.id] && (x.players[p.id].out = false), L.deposit(x, p.id, v)), `${p.name} added Rs ${fmt(v)}`); else $(inId).focus(); }, text:"Add money"}),
-          h("button", {class:"btn-sm btn-ghost", onclick:() => mutate(x => L.dismiss(x, p.id), `${p.name} left the table`), text:"Dismiss"})));
+          h("button", {class:"btn-sm btn-brass", onclick:() => { const v = int($(inId).value, 0); if (v > 0) mutate(x => (x.players[p.id] && (x.players[p.id].out = false), L.deposit(x, p.id, v), L.autoBoot(x)), `${p.name} added Rs ${fmt(v)}`); else $(inId).focus(); }, text:"Add money"}),
+          h("button", {class:"btn-sm btn-ghost", onclick:() => mutate(x => L.autoBoot(L.dismiss(x, p.id)), `${p.name} left the table`), text:"Dismiss"})));
     }));
     ring.querySelectorAll(".pseat").forEach(el => {
       const p = s.players[el.dataset.pid];
@@ -717,6 +726,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     if (view.latestT && view.latestT !== prev.latestT && s.latest && pos[s.latest.pid]){
       const pid = s.latest.pid, to = pos[pid];
       tweenNum($("potAmt"), prev.pot || s.latest.amt, 0, 700);
+      if (s.pot > 0) setTimeout(() => { if ($("potAmt").textContent === "0") $("potAmt").textContent = "0"; }, 0);
       for (let i = 0; i < 14; i++) fly({x:center.x + (Math.random()*10-5), y:center.y + (Math.random()*8-4)}, to, i*55, 24, -60);
       const el = seatEl(pid);
       setTimeout(() => {
@@ -729,6 +739,14 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       }, 650);
       floatText(to, "+" + fmt(s.latest.amt), 650);
       confetti(to, 700);
+      // Next round's boot was collected straight away: chips go back in from every seat
+      const booted = Object.entries(view.inPot).filter(([id, a]) => a > 0 && pos[id]);
+      if (booted.length){
+        const T = 1700;
+        booted.forEach(([id], k) => { for (let i = 0; i < 2; i++) fly(pos[id], {x:center.x + (i ? 2 : -2), y:center.y + 4}, T + k*110 + i*90, 22); });
+        setTimeout(() => tweenNum($("potAmt"), 0, s.pot, 700 + booted.length*110), T);
+        pulse(T + 650 + booted.length*110);
+      }
       return;
     }
     // Bets and boot: chips arc from each paying seat into the pot
