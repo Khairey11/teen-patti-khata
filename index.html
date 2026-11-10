@@ -170,9 +170,10 @@ body{background:
   repeating-linear-gradient(45deg, transparent 0 22px, rgba(127,127,127,.035) 22px 23px),
   repeating-linear-gradient(-45deg, transparent 0 22px, rgba(127,127,127,.035) 22px 23px),
   var(--bg);background-attachment:fixed}
-h1{font-size:32px}
-header{padding-block:4px}
-.fan{position:relative;width:74px;height:56px;flex:none}
+h1{font-size:clamp(24px,7.4vw,32px)}
+header{padding-block:4px;flex-wrap:nowrap}
+header > div:first-child{min-width:0}
+.fan{position:relative;width:64px;height:52px;flex:none}
 .fan .card{position:absolute;bottom:0;left:22px;width:34px;height:48px;border-radius:6px;background:#fbf8f1;border:1px solid #d9cfbd;box-shadow:0 4px 10px rgba(0,0,0,.25);color:#1a1a1a;font-family:var(--display);font-size:15px;line-height:1;padding:4px 0 0 5px;transform-origin:50% 120%}
 .fan .card i{display:block;font-style:normal;font-size:14px;margin-top:2px}
 .fan .card.red{color:#c0262d}
@@ -579,8 +580,8 @@ header{padding-block:4px}
     const avb = h("button", {type:"button", class:"avbtn", "aria-label":"Choose avatar for player " + (i+1)});
     setAvBtn(avb, ""); avb.onclick = () => openAvatarPicker(avb.dataset.av, c => setAvBtn(avb, c));
     const row = h("div", {class:"prow"}, avb,
-      h("input", {id:"cpn" + i, maxlength:"24", placeholder:"Player " + (i+1) + " name", "aria-label":"Player " + (i+1) + " name", value: name || ""}),
-      h("input", {id:"cpd" + i, type:"number", inputmode:"numeric", min:"1", placeholder:"Rs deposit", "aria-label":"Player " + (i+1) + " deposit", value: dep || ""}),
+      h("input", {id:"cpn" + i, maxlength:"24", placeholder:"Name", "aria-label":"Player " + (i+1) + " name", value: name || ""}),
+      h("input", {id:"cpd" + i, type:"number", inputmode:"numeric", min:"1", placeholder:"Rs", "aria-label":"Player " + (i+1) + " deposit", value: dep || ""}),
       h("button", {class:"btn-ghost", "aria-label":"Remove this player", onclick:() => row.remove(), text:"✕"}));
     $("cPlayers").append(row);
   }
