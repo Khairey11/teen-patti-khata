@@ -725,7 +725,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     const hasBoot = s.boot > 0;
     $("collectBtn").hidden = !hasBoot;
     $("collectBtn").disabled = s.pot > 0 || active.length < 2;
-    $("bootTag").textContent = hasBoot ? `Boot ${fmt(s.boot)}` : "No boot";
+    $("bootTag").textContent = hasBoot ? `Boot ${fmt(s.boot)} each` : "No boot";
     $("tableNote").textContent = players.length < 2 ? "Seat at least two players to start." :
       s.pot > 0 ? "Tap a seat to bet for that player. When the round ends, tap the winner's name." :
       hasBoot ? `Boot ${fmt(s.boot)} is collected from all ${active.length} players at the start of every round. Change it any time.` :
