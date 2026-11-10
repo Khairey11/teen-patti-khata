@@ -231,7 +231,7 @@ header > div:first-child{min-width:0}
 
 .reset-btn{align-self:flex-start;color:var(--loss);border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
 .reset-box{display:flex;flex-direction:column;gap:10px;border:1px solid var(--loss);border-radius:12px;padding:12px}
-.reset-yes{background:var(--loss);border-color:var(--loss);color:#fff}
+.reset-yes{background:#b3362f;border-color:#b3362f;color:#fff}
 </style>
 </head>
 <body>
@@ -539,8 +539,10 @@ header > div:first-child{min-width:0}
   async function saveWith(fn){
     for (let attempt = 0; attempt < 4; attempt++){
       const before = clone(state); delete before.prev;
-      const next = fn(clone(before));
-      if (!next || JSON.stringify(next) === JSON.stringify(before)) return false;
+      const next = fn(clone(state));            // fn sees .prev, so Undo can step back
+      if (!next) return false;
+      delete next.prev;
+      if (JSON.stringify(next) === JSON.stringify(before)) return false;
       next.prev = before; next.rev = (before.rev||0) + 1; next.updated = Date.now();
       state = next; render();   // show it (and animate) right away; the save confirms below
       const { data, error } = await sb.from(TABLE)
@@ -563,7 +565,7 @@ header > div:first-child{min-width:0}
     });
     return queue;
   }
-  function undo(){ mutate(s => s.prev ? (delete s.prev.prev, s.prev.rev = s.rev, s.prev) : s, null).then(() => toast("Undone")); }
+  function undo(){ selSeat = null; mutate(s => s.prev ? Object.assign(s.prev, { rev: s.rev }) : s, null).then(() => toast("Undone")); }
 
   async function openRoom(c){
     closeRoom();
