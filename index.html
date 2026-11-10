@@ -103,6 +103,21 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 .inline{flex-direction:row;align-items:center;gap:8px;color:var(--fg)}
 .plist{display:flex;flex-direction:column;gap:8px}
+.name-av{display:flex;gap:8px;align-items:center}
+.avbtn{width:44px;height:44px;min-height:44px;flex:none;padding:0;border-radius:50%;overflow:hidden;border:2px dashed var(--line);background:var(--surface);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.avbtn svg,.pseat .av svg{width:100%;height:100%;display:block}
+.avbtn.set{border-style:solid;border-color:var(--brass)}
+.pseat .av.pic{padding:0;overflow:visible}
+.pseat .av.pic svg{border-radius:50%}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:0 max(0px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(0px,env(safe-area-inset-left,0px))}
+.sheet-card{background:var(--surface);color:var(--fg);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px 22px;display:flex;flex-direction:column;gap:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button[aria-selected="true"]{background:var(--felt);color:var(--on-felt)}
+.av-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;justify-items:center}
+.av-grid button{width:76px;height:76px;padding:0;border-radius:50%;overflow:hidden;border:3px solid transparent;background:none}
+.av-grid button[aria-pressed="true"]{border-color:var(--brass)}
+.prow{grid-template-columns:auto minmax(0,1.4fr) minmax(0,1fr) auto !important}
 .prow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:8px;align-items:center}
 .prow button{min-height:42px;padding:6px 12px}
 .seat .name{font-weight:700;font-size:18px;overflow-wrap:anywhere;background:none;border:0;padding:0;min-height:0;text-align:left;border-radius:4px}
@@ -182,7 +197,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       <h2>Join this table</h2>
       <p class="note" style="margin:0">Enter your name and the cash you deposited. You get 1 point for every rupee.</p>
       <div class="grid2">
-        <label for="meName">Your name<input id="meName" maxlength="24" placeholder="Didi"></label>
+        <label for="meName">Your name<span class="name-av"><button type="button" class="avbtn" id="meAv" aria-label="Choose your avatar"></button><input id="meName" maxlength="24" placeholder="Didi"></span></label>
         <label for="meDep">Cash deposit (Rs)<input id="meDep" type="number" inputmode="numeric" min="1" placeholder="500"></label>
       </div>
       <button id="meJoin" class="btn-brass">Take a seat</button>
@@ -239,6 +254,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
           </div>
           <div class="row">
             <button id="actOut" class="btn-sm btn-ghost"></button>
+            <button id="actAv" class="btn-sm btn-ghost">Change avatar</button>
             <button id="actRemove" class="btn-sm btn-ghost">Remove player</button>
           </div>
         </div>
@@ -257,7 +273,7 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     <div class="panel" id="addPanel">
       <h2>Add a player</h2>
       <div class="grid2">
-        <label for="pName">Name<input id="pName" maxlength="24" placeholder="Didi"></label>
+        <label for="pName">Name<span class="name-av"><button type="button" class="avbtn" id="pAv" aria-label="Choose avatar"></button><input id="pName" maxlength="24" placeholder="Didi"></span></label>
         <label for="pStart">Cash deposit (Rs)<input id="pStart" type="number" inputmode="numeric" min="1" placeholder="500"></label>
       </div>
       <div id="addErr" class="err" hidden></div>
@@ -286,6 +302,17 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       <ul class="ledger" id="ledger"></ul>
     </div>
   </section>
+</div>
+
+<div id="avSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="avTitle">
+  <div class="sheet-card">
+    <div class="row" style="justify-content:space-between"><h2 id="avTitle">Choose an avatar</h2><button id="avClose" class="btn-ghost btn-sm">Close</button></div>
+    <div class="seg" role="tablist">
+      <button id="avMale" role="tab">Male</button>
+      <button id="avFemale" role="tab">Female</button>
+    </div>
+    <div id="avGrid" class="av-grid"></div>
+  </div>
 </div>
 
 <div id="toast" class="toast" role="status" hidden><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
@@ -366,9 +393,9 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       return s;
     },
     deposit(s, pid, amt){ if (s.players[pid] && amt > 0){ s.players[pid].chips += amt; s.players[pid].start += amt; } return s; },
-    addPlayer(s, name, start, fixedId){
+    addPlayer(s, name, start, fixedId, av){
       const id = fixedId || ("p" + rid(6));
-      s.players[id] = {name, chips:start, start, wins:0, out:false, joined:Date.now()};
+      s.players[id] = {name, chips:start, start, wins:0, out:false, joined:Date.now(), av: validAv(av) ? av : null};
       return s;
     }
   };
@@ -444,7 +471,9 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
 
   function addRow(name, dep){
     const i = $("cPlayers").children.length;
-    const row = h("div", {class:"prow"},
+    const avb = h("button", {type:"button", class:"avbtn", "aria-label":"Choose avatar for player " + (i+1)});
+    setAvBtn(avb, ""); avb.onclick = () => openAvatarPicker(avb.dataset.av, c => setAvBtn(avb, c));
+    const row = h("div", {class:"prow"}, avb,
       h("input", {id:"cpn" + i, maxlength:"24", placeholder:"Player " + (i+1) + " name", "aria-label":"Player " + (i+1) + " name", value: name || ""}),
       h("input", {id:"cpd" + i, type:"number", inputmode:"numeric", min:"1", placeholder:"Rs deposit", "aria-label":"Player " + (i+1) + " deposit", value: dep || ""}),
       h("button", {class:"btn-ghost", "aria-label":"Remove this player", onclick:() => row.remove(), text:"✕"}));
@@ -455,11 +484,11 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     const boot = Math.max(0, int($("cBoot").value, 0));
     const seats = {}; let bad = false, n = 0;
     for (const row of $("cPlayers").children){
-      const [ni, di] = row.querySelectorAll("input");
+      const [ni, di] = row.querySelectorAll("input"); const av = row.querySelector(".avbtn").dataset.av;
       const name = ni.value.trim(), dep = int(di.value, 0);
       if (!name && !di.value) continue;
       if (!name || dep <= 0) { bad = true; continue; }
-      seats["p" + rid(6)] = {name, chips:dep, start:dep, wins:0, out:false, joined:Date.now() + (n++)};
+      seats["p" + rid(6)] = {name, chips:dep, start:dep, wins:0, out:false, joined:Date.now() + (n++), av: validAv(av) ? av : null};
     }
     if (bad) return showErr("createErr", "Each player needs a name and a deposit above 0.");
     $("createBtn").disabled = true;
@@ -478,6 +507,56 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
   }
 
   // ---------- Render ----------
+  // Original illustrated avatars: 6 male, 6 female. Codes "m0".."m5", "f0".."f5".
+  const SKIN = ["#f3d2b8","#e9b996","#d8a077","#c08559","#9e6a44","#7b4e30"];
+  const BGS  = ["#fde3a7","#c7dcff","#ffd4e5","#c9f2d8","#ffd9c2","#d9ccff"];
+  const HAIR = ["#1d1714","#3a271c","#2a2a2a","#5b3a22","#151515","#4a2e1c"];
+  const validAv = a => typeof a === "string" && /^[mf][0-5]$/.test(a);
+  function avatarSVG(code){
+    if (!validAv(code)) return "";
+    const g = code[0], v = +code[1], sk = SKIN[v], hr = HAIR[v], bg = BGS[v];
+    const shirt = g === "m" ? ["#1e3a8a","#7c2d12","#14532d","#4c1d95","#0f766e","#831843"][v] : ["#be185d","#7e22ce","#b45309","#0e7490","#9f1239","#166534"][v];
+    let back = "", front = "", extra = "";
+    if (g === "m"){
+      front = `<path d="M18 30c0-10 6-16 14-16s14 6 14 16c-3-5-8-7-14-7s-11 2-14 7z" fill="${hr}"/>`;
+      if (v === 1 || v === 4) extra += `<path d="M26 41c2-2 4-2 6-1 2-1 4-1 6 1-2 1-4 1-6 0-2 1-4 1-6 0z" fill="${hr}"/>`;
+      if (v === 4) extra += `<path d="M21 36c1 9 5 14 11 14s10-5 11-14c-2 6-6 9-11 9s-9-3-11-9z" fill="${hr}" opacity=".9"/>`;
+      if (v === 2) front = `<path d="M17 25c1-7 7-11 15-11s14 4 15 11l-2 2H19z" fill="#c2410c"/><path d="M19 22h26M21 18h22" stroke="#fde047" stroke-width="1.6" stroke-dasharray="2 2"/><path d="M19 27h26" stroke="#7c2d12" stroke-width="2"/>`;
+      if (v === 5) extra += `<g fill="none" stroke="#111" stroke-width="1.5"><circle cx="27" cy="33" r="3.6"/><circle cx="37" cy="33" r="3.6"/><path d="M30.6 33h2.8"/></g>`;
+    } else {
+      back = `<path d="M16 32c0-12 7-19 16-19s16 7 16 19v18H16z" fill="${hr}"/>`;
+      front = `<path d="M18 31c1-10 7-15 14-15s13 5 14 15c-4-6-9-8-14-8s-10 2-14 8z" fill="${hr}"/>`;
+      if (v === 3) { back = ""; front = `<circle cx="32" cy="13" r="6" fill="${hr}"/><path d="M18 30c0-10 6-15 14-15s14 5 14 15c-3-5-8-7-14-7s-11 2-14 7z" fill="${hr}"/>`; }
+      if (v % 2 === 0) extra += `<circle cx="32" cy="28.5" r="1.4" fill="#dc2626"/>`;
+      if (v === 5) extra += `<circle cx="18.6" cy="38" r="1.8" fill="#facc15"/><circle cx="45.4" cy="38" r="1.8" fill="#facc15"/>`;
+      if (v === 1) extra += `<path d="M22 22c4-3 9-4 14-2" stroke="#f472b6" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    }
+    return `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="${bg}"/>${back}`+
+      `<path d="M12 64c2-10 10-15 20-15s18 5 20 15z" fill="${shirt}"/><rect x="28" y="42" width="8" height="8" rx="3" fill="${sk}"/>`+
+      `<ellipse cx="18.5" cy="34" rx="2.5" ry="3.5" fill="${sk}"/><ellipse cx="45.5" cy="34" rx="2.5" ry="3.5" fill="${sk}"/>`+
+      `<circle cx="32" cy="33" r="13.5" fill="${sk}"/>${front}`+
+      `<circle cx="27" cy="33" r="1.6" fill="#1a1a1a"/><circle cx="37" cy="33" r="1.6" fill="#1a1a1a"/>`+
+      `<path d="M28 39.5c2.4 2 5.6 2 8 0" stroke="#7a3b2a" stroke-width="1.6" fill="none" stroke-linecap="round"/>${extra}</svg>`;
+  }
+  function setAvBtn(btn, code){
+    btn.dataset.av = validAv(code) ? code : "";
+    btn.innerHTML = validAv(code) ? avatarSVG(code) : "+";
+    btn.classList.toggle("set", validAv(code));
+  }
+  let avDone = null, avGender = "m", avCurrent = "";
+  function openAvatarPicker(current, done){
+    avDone = done; avCurrent = validAv(current) ? current : ""; avGender = avCurrent ? avCurrent[0] : "m";
+    drawAvGrid(); $("avSheet").hidden = false; $("avGrid").querySelector("button").focus();
+  }
+  function drawAvGrid(){
+    $("avMale").setAttribute("aria-selected", String(avGender === "m"));
+    $("avFemale").setAttribute("aria-selected", String(avGender === "f"));
+    $("avGrid").replaceChildren(...[0,1,2,3,4,5].map(v => {
+      const c = avGender + v, b = h("button", {"aria-pressed": String(c === avCurrent), "aria-label": (avGender === "m" ? "Male" : "Female") + " avatar " + (v+1),
+        onclick:() => { $("avSheet").hidden = true; const d = avDone; avDone = null; if (d) d(c); }});
+      b.innerHTML = avatarSVG(c); return b;
+    }));
+  }
   const PALETTE = ["#c2410c","#7c3aed","#0e7490","#b91c1c","#15803d","#a16207","#be185d","#1d4ed8","#4d7c0f","#9333ea"];
   const initials = n => n.trim().split(/\s+/).map(w => w[0]).join("").slice(0,2).toUpperCase() || "?";
   const reduceMotion = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ return false; } };
@@ -503,11 +582,13 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       ring.append(h("button", {class:"pseat" + (p.id === selSeat ? " sel" : "") + (p.out ? " out" : ""), style:`left:${at.x}%;top:${at.y}%`,
           "data-pid": p.id, "aria-pressed": String(p.id === selSeat), "aria-label": `${p.name}, ${fmt(p.chips)} points`,
           onclick:() => { selSeat = p.id; render(); }},
-        h("span", {class:"av", style:`background:${PALETTE[i % PALETTE.length]}`, text:initials(p.name)},
+        h("span", validAv(p.av) ? {class:"av pic", "data-svg": p.av} : {class:"av", style:`background:${PALETTE[i % PALETTE.length]}`, text:initials(p.name)},
           isWinner ? h("span", {class:"crownmark", text:"♛"}) : null,
           p.id === myPid ? h("span", {class:"youmark", text:"YOU"}) : null),
         h("span", {class:"nm", text:p.name}),
         h("span", {class:"pt num", text:fmt(p.chips)})));
+      const avEl = ring.lastElementChild.querySelector(".av.pic");
+      if (avEl) avEl.insertAdjacentHTML("afterbegin", avatarSVG(p.av));
       if (inPot > 0) ring.append(h("div", {class:"stake num", style:`left:${at.sx}%;top:${at.sy}%`}, h("span", {class:"coin"}), String(fmt(inPot))));
     });
 
@@ -625,6 +706,15 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
   $("actDepBtn").onclick = () => { const v = int($("actDepIn").value, 0), pid = selSeat; if (v > 0 && pid) { mutate(x => L.deposit(x, pid, v), `${state.players[pid].name} deposited Rs ${fmt(v)}`); $("actDepIn").value = ""; } };
   $("actOut").onclick = () => { const pid = selSeat; if (pid) mutate(x => (x.players[pid].out = !x.players[pid].out, x), null); };
   $("actRemove").onclick = () => { const pid = selSeat; if (pid) { const n = state.players[pid].name; selSeat = null; mutate(x => (delete x.players[pid], x), `Removed ${n}`); } };
+  setAvBtn($("meAv"), ""); setAvBtn($("pAv"), "");
+  $("meAv").onclick = () => openAvatarPicker($("meAv").dataset.av, c => setAvBtn($("meAv"), c));
+  $("pAv").onclick = () => openAvatarPicker($("pAv").dataset.av, c => setAvBtn($("pAv"), c));
+  $("actAv").onclick = () => { const pid = selSeat; if (!pid) return; openAvatarPicker(state.players[pid].av, c => mutate(x => (x.players[pid] && (x.players[pid].av = c), x), `Avatar updated for ${state.players[pid].name}`)); };
+  $("avMale").onclick = () => { avGender = "m"; drawAvGrid(); };
+  $("avFemale").onclick = () => { avGender = "f"; drawAvGrid(); };
+  $("avClose").onclick = () => { $("avSheet").hidden = true; avDone = null; };
+  $("avSheet").addEventListener("click", e => { if (e.target === $("avSheet")) $("avClose").click(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("avSheet").hidden) $("avClose").click(); });
   $("cAddRow").onclick = () => { addRow(); $("cPlayers").lastElementChild.querySelector("input").focus(); };
   addRow(); addRow();
   $("collectBtn").onclick = () => mutate(x => L.collectBoot(x), `Round started · boot ${fmt(state.boot)} collected`);
@@ -639,7 +729,9 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     if (!name) { $("pName").focus(); return; }
     const dep = int($("pStart").value, 0);
     if (dep <= 0) { showErr("addErr", "Enter the cash this player deposited."); $("pStart").focus(); return; }
-    mutate(x => L.addPlayer(x, name, dep), `${name} joined with Rs ${fmt(dep)}`);
+    const av = $("pAv").dataset.av;
+    mutate(x => L.addPlayer(x, name, dep, null, av), `${name} joined with Rs ${fmt(dep)}`);
+    setAvBtn($("pAv"), "");
     $("pName").value = ""; $("pStart").value = "";
   };
   $("meJoin").onclick = () => {
@@ -650,7 +742,8 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
     if (dep <= 0) { showErr("meErr", "Enter the cash you deposited."); $("meDep").focus(); return; }
     const c = code, pid = "p" + rid(6);
     me.set(c, { pid });
-    mutate(x => L.addPlayer(x, name, dep, pid), `${name} took a seat with Rs ${fmt(dep)}`);
+    const av = $("meAv").dataset.av;
+    mutate(x => L.addPlayer(x, name, dep, pid, av), `${name} took a seat with Rs ${fmt(dep)}`);
     $("meName").value = ""; $("meDep").value = "";
   };
   $("meDep").addEventListener("keydown", e => { if (e.key === "Enter") $("meJoin").click(); });
