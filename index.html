@@ -392,11 +392,13 @@ details summary{cursor:pointer;font-weight:600;color:var(--muted);padding:4px 0}
       const next = fn(clone(before));
       if (!next || JSON.stringify(next) === JSON.stringify(before)) return false;
       next.prev = before; next.rev = (before.rev||0) + 1; next.updated = Date.now();
+      state = next; render();   // show it (and animate) right away; the save confirms below
       const { data, error } = await sb.from(TABLE)
         .update({ data: next, updated_at: new Date().toISOString() })
-        .eq("code", code).eq("data->>rev", String(before.rev||0)).select("code");
-      if (error) throw error;
-      if (data && data.length){ state = next; render(); return true; }
+        .eq("code", code).eq("data->>rev", String(before.rev||0)).select("code")
+        .then(r => r, e => ({ error: e }));
+      if (error) { state = before; render(); throw error; }
+      if (data && data.length) return true;
       const fresh = await fetchRoom(code);   // someone else tapped first
       if (!fresh) throw new Error("gone");
       state = fresh; render();
