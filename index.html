@@ -89,6 +89,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
 .seat-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.4fr);gap:8px}
 .win-btn{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
 .more{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:10px}
+.you{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--brass);color:var(--brass-ink);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:middle}
 .tag{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--line);color:var(--fg)}
 
 .code{font-family:var(--display);font-size:34px;letter-spacing:.18em}
@@ -149,6 +150,16 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
         <h2 id="rName" style="overflow-wrap:anywhere"></h2>
       </div>
       <button id="leaveBtn" class="btn-ghost btn-sm">Leave room</button>
+    </div>
+
+    <div id="joinCard" class="panel" hidden style="border:2px solid var(--brass)">
+      <h2>Join this table</h2>
+      <p class="note" style="margin:0">Enter your name to take a seat. You start with <b id="joinStart" class="num"></b> points.</p>
+      <div class="row">
+        <input id="meName" maxlength="24" placeholder="Your name" style="flex:1 1 160px" aria-label="Your name">
+        <button id="meJoin" class="btn-brass">Take a seat</button>
+      </div>
+      <button id="meWatch" class="btn-ghost btn-sm" style="align-self:flex-start">Just watch</button>
     </div>
 
     <div id="winner" class="winner" hidden>
@@ -226,6 +237,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     get(){ try { return localStorage.getItem("tpk.room"); } catch(e){ return null; } },
     set(v){ try { v ? localStorage.setItem("tpk.room", v) : localStorage.removeItem("tpk.room"); } catch(e){} }
   };
+  const me = {
+    get(c){ try { return JSON.parse(localStorage.getItem("tpk.me." + c) || "null"); } catch(e){ return null; } },
+    set(c, v){ try { localStorage.setItem("tpk.me." + c, JSON.stringify(v)); } catch(e){} }
+  };
   const fmt = n => (Math.round(n) || 0).toLocaleString("en-IN");
   const int = (v, d) => { if (v == null || String(v).trim() === "") return d; const n = Math.floor(Number(v)); return Number.isFinite(n) ? n : d; };
   const rid = n => Array.from({length:n}, () => ALPHA[Math.floor(Math.random()*ALPHA.length)]).join("");
@@ -274,8 +289,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
       return s;
     },
     topUp(s, pid, amt){ if (s.players[pid] && amt){ s.players[pid].chips += amt; s.players[pid].start += amt; } return s; },
-    addPlayer(s, name, start){
-      const id = "p" + rid(6);
+    addPlayer(s, name, start, fixedId){
+      const id = fixedId || ("p" + rid(6));
       s.players[id] = {name, chips:start, start, wins:0, out:false, joined:Date.now()};
       return s;
     }
@@ -387,6 +402,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     $("winner").hidden = !w;
     if (w){ $("wName").textContent = w.name; $("wMeta").textContent = `Won ${fmt(w.amt)} in round ${w.round} · ${new Date(w.t).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`; }
 
+    const mine = me.get(code);
+    const seated = mine && mine.pid && s.players[mine.pid];
+    $("joinCard").hidden = !!seated || !!(mine && mine.watch);
+    $("joinStart").textContent = fmt(s.startChips);
     const box = $("seats"); box.replaceChildren();
     if (!players.length) box.append(h("div", {class:"panel note", text:"No players yet. Add everyone at the table below with their starting points."}));
     for (const p of players){
@@ -394,7 +413,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
       const seat = h("div", {class:"seat" + (p.out ? " out" : "")},
         h("div", {class:"seat-top"},
           h("div", {style:"min-width:0"},
-            h("button", {class:"name", "aria-expanded": String(open), onclick:() => { openSeat = open ? null : p.id; render(); }, text:p.name + (open ? " ▴" : " ▾")}),
+            h("button", {class:"name", "aria-expanded": String(open), onclick:() => { openSeat = open ? null : p.id; render(); }, text:p.name + (open ? " ▴" : " ▾")}, ...(seated && mine.pid === p.id ? [h("span", {class:"you", text:"You"})] : [])),
             h("div", {class:"meta num", text:`${p.wins||0} win${p.wins===1?"":"s"} · in pot ${fmt(inPot)}${p.out ? " · sitting out" : ""}`})),
           h("div", {style:"text-align:right"},
             h("div", {class:"chips num", text:fmt(p.chips)}),
@@ -451,6 +470,16 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;
     mutate(x => L.addPlayer(x, name, start), `${name} joined with ${fmt(start)} points`);
     $("pName").value = ""; $("pStart").value = "";
   };
+  $("meJoin").onclick = () => {
+    const name = $("meName").value.trim();
+    if (!name) { $("meName").focus(); return; }
+    const c = code, pid = "p" + rid(6);
+    me.set(c, { pid });
+    mutate(x => L.addPlayer(x, name, x.startChips, pid), `${name} took a seat`);
+    $("meName").value = "";
+  };
+  $("meName").addEventListener("keydown", e => { if (e.key === "Enter") $("meJoin").click(); });
+  $("meWatch").onclick = () => { me.set(code, { watch:true }); render(); };
   $("pName").addEventListener("keydown", e => { if (e.key === "Enter") $("addBtn").click(); });
   $("copyBtn").onclick = async () => {
     const link = location.origin + location.pathname + "#" + code;
